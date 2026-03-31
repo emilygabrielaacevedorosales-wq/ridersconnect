@@ -271,7 +271,7 @@
             <div class="stats-row">
                 <div class="stat-card"><div class="stat-val green" id="statRegistros">0</div><div class="stat-label">Registros hoy</div></div>
                 <div class="stat-card"><div class="stat-val purple" id="statRutas">0</div><div class="stat-label">Rutas</div></div>
-                <div class="stat-card"><div class="stat-val amber" id="statPromedio">\$0</div><div class="stat-label">Promedio/km</div></div>
+                <div class="stat-card"><div class="stat-val amber" id="statPromedio">0 km</div><div class="stat-label">Promedio km/viaje</div></div>
             </div>
 
             <!-- FORMULARIO REGISTRO DE VIAJE -->
@@ -293,6 +293,10 @@
                 <div class="form-row">
                     <div class="form-group"><label>Kilómetros totales</label><input type="number" class="form-input" id="tarifaKm" placeholder="Ej: 12" min="1" step="0.1"></div>
                     <div class="form-group"><label>Ganancia total (CLP $)</label><input type="number" class="form-input" id="tarifaGanancia" placeholder="Ej: 5500" min="100" step="100"></div>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                    <input type="checkbox" id="compartirComoPost" checked style="transform:scale(1.2);" />
+                    <label for="compartirComoPost" style="font-size:13px;color:var(--text-muted);">Compartir como publicación al registrar viaje</label>
                 </div>
                 <div style="background:var(--bg-input);border-radius:12px;padding:12px;margin:12px 0;text-align:center">
                     <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Ganancia por kilómetro</div>
@@ -378,7 +382,7 @@
             <div class="profile-stats">
                 <div class="profile-stat"><div class="val" id="profilePosts">0</div><div class="lbl">Posts</div></div>
                 <div class="profile-stat"><div class="val" id="profileViajes">0</div><div class="lbl">Viajes</div></div>
-                <div class="profile-stat"><div class="val" id="profileGananciaTotal">\$0</div><div class="lbl">Ganancia</div></div>
+                <div class="profile-stat"><div class="val" id="profileKmTotal">0 km</div><div class="lbl">Km recorridos</div></div>
             </div>
 
             <div class="badges" id="profileBadges">
@@ -394,8 +398,8 @@
                         <div style="font-size:11px;color:var(--text-muted)">Km totales</div>
                     </div>
                     <div style="background:var(--bg-input);border-radius:10px;padding:12px;text-align:center">
-                        <div style="font-size:18px;font-weight:700;color:var(--primary-light)" id="profilePromedioKm">\$0</div>
-                        <div style="font-size:11px;color:var(--text-muted)">Promedio/km</div>
+                        <div style="font-size:18px;font-weight:700;color:var(--primary-light)" id="profilePromedioKm">0 km</div>
+                        <div style="font-size:11px;color:var(--text-muted)">Promedio km/viaje</div>
                     </div>
                     <div style="background:var(--bg-input);border-radius:10px;padding:12px;text-align:center">
                         <div style="font-size:18px;font-weight:700;color:var(--accent)" id="profileRutaTop">-</div>
@@ -795,13 +799,12 @@ function registrarViaje() {
     var comunaA = document.getElementById('comunaA').value;
     var comunaB = document.getElementById('comunaB').value;
     var km = parseFloat(document.getElementById('tarifaKm').value);
-    var ganancia = parseFloat(document.getElementById('tarifaGanancia').value);
+    var ganancia = parseFloat(document.getElementById('tarifaGanancia').value) || 0;
+    var compartir = document.getElementById('compartirComoPost').checked;
 
     if (!comunaA || !comunaB) { showToast('📍 Selecciona ambas comunas', 'info'); return; }
     if (!km || km <= 0) { showToast('📏 Ingresa los kilómetros', 'info'); return; }
-    if (!ganancia || ganancia <= 0) { showToast('💰 Ingresa la ganancia', 'info'); return; }
 
-    var porKm = Math.round(ganancia / km);
     var esIntercomunal = comunaA === comunaB;
     var rutaKey = comunaA + ' → ' + comunaB;
 
@@ -814,25 +817,25 @@ function registrarViaje() {
         rutaKey: rutaKey,
         km: km,
         ganancia: ganancia,
-        porKm: porKm,
         intercomunal: esIntercomunal,
         timestamp: Date.now()
     });
 
-    // Post automático en el feed
-    db.ref('posts').push({
-        uid: currentUser.uid,
-        user: currentUserData.name,
-        avatar: currentUserData.avatar,
-        city: currentUserData.city,
-        comuna: currentUserData.comuna,
-        content: '📊 Registré un viaje: <strong>' + rutaKey + '</strong> | ' + km + ' km | $' + ganancia.toLocaleString('es-CL') + ' | <span class="tag">$' + porKm.toLocaleString('es-CL') + '/km</span>' + (esIntercomunal ? ' 🔄 Intercomunal' : ''),
-        timestamp: Date.now(),
-        hasFare: true,
-        fareOrigin: comunaA,
-        fareDest: comunaB,
-        fareAmount: ganancia
-    });
+    if (compartir) {
+        db.ref('posts').push({
+            uid: currentUser.uid,
+            user: currentUserData.name,
+            avatar: currentUserData.avatar,
+            city: currentUserData.city,
+            comuna: currentUserData.comuna,
+            content: '📊 Registré un viaje: <strong>' + rutaKey + '</strong> | ' + km + ' km' + (esIntercomunal ? ' 🔄 Intercomunal' : ''),
+            timestamp: Date.now(),
+            hasFare: true,
+            fareOrigin: comunaA,
+            fareDest: comunaB,
+            fareKm: km
+        });
+    }
 
     // Limpiar
     document.getElementById('comunaA').value = '';
@@ -849,10 +852,8 @@ function listenTarifas() {
     db.ref('viajes').orderByChild('timestamp').on('value', function(snap) {
         var viajes = [];
         var rutas = {};
-        var totalGanancia = 0;
         var totalKm = 0;
         var myViajes = 0;
-        var myGanancia = 0;
         var myKm = 0;
         var myRutas = {};
 
@@ -867,21 +868,17 @@ function listenTarifas() {
                     comunaA: v.comunaA, 
                     comunaB: v.comunaB, 
                     registros: [], 
-                    totalGan: 0, 
                     totalKm: 0,
                     intercomunal: v.intercomunal 
                 };
             }
             rutas[v.rutaKey].registros.push(v);
-            rutas[v.rutaKey].totalGan += v.ganancia;
             rutas[v.rutaKey].totalKm += v.km;
-            totalGanancia += v.ganancia;
             totalKm += v.km;
 
             // Mis stats
             if (currentUser && v.uid === currentUser.uid) {
                 myViajes++;
-                myGanancia += v.ganancia;
                 myKm += v.km;
                 if (!myRutas[v.rutaKey]) myRutas[v.rutaKey] = 0;
                 myRutas[v.rutaKey]++;
@@ -891,15 +888,14 @@ function listenTarifas() {
         // Stats generales
         document.getElementById('statRegistros').textContent = viajes.length;
         document.getElementById('statRutas').textContent = Object.keys(rutas).length;
-        var promKm = totalKm > 0 ? Math.round(totalGanancia / totalKm) : 0;
-        document.getElementById('statPromedio').textContent = '$' + promKm.toLocaleString('es-CL');
+        var promKm = viajes.length > 0 ? (totalKm / viajes.length).toFixed(1) : 0;
+        document.getElementById('statPromedio').textContent = promKm + ' km';
 
         // Stats perfil
         document.getElementById('profileViajes').textContent = myViajes;
-        document.getElementById('profileGananciaTotal').textContent = '$' + myGanancia.toLocaleString('es-CL');
-        document.getElementById('profileKmTotal').textContent = myKm.toFixed(1);
-        var myPromKm = myKm > 0 ? Math.round(myGanancia / myKm) : 0;
-        document.getElementById('profilePromedioKm').textContent = '$' + myPromKm.toLocaleString('es-CL');
+        document.getElementById('profileKmTotal').textContent = myKm.toFixed(1) + ' km';
+        var myPromKm = myKm > 0 ? (myKm / myViajes).toFixed(1) : 0;
+        document.getElementById('profilePromedioKm').textContent = myPromKm + ' km';
 
         // Ruta favorita
         var topRuta = '-';
@@ -931,25 +927,25 @@ function listenTarifas() {
             promList.innerHTML = '<div class="loading">No hay datos aún. ¡Registra tu primer viaje!</div>';
         } else {
             promList.innerHTML = rutasArr.map(function(r) {
-                var promGan = Math.round(r.totalGan / r.registros.length);
-                var promKmR = r.totalKm > 0 ? Math.round(r.totalGan / r.totalKm) : 0;
                 var promKmViaje = (r.totalKm / r.registros.length).toFixed(1);
+                var minKm = Math.min.apply(null, r.registros.map(function(x){return x.km;}));
+                var maxKm = Math.max.apply(null, r.registros.map(function(x){return x.km;}));
 
                 return '<div class="tarifa-item">' +
                     '<div class="tarifa-item-header"><div>' +
                     '<h4>' + (r.intercomunal ? '🔄 ' : '📍 ') + r.comunaA + ' → ' + r.comunaB + '</h4>' +
                     '<div class="sub">' + r.registros.length + ' registros • Prom: ' + promKmViaje + ' km</div></div>' +
-                    '<div class="price-badge">$' + promGan.toLocaleString('es-CL') + '</div></div>' +
+                    '<div class="price-badge">' + promKmViaje + ' km</div></div>' +
                     '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px">' +
                     '<div style="background:var(--bg-input);border-radius:8px;padding:8px;text-align:center">' +
-                    '<div style="font-size:16px;font-weight:700;color:var(--secondary)">$' + promKmR.toLocaleString('es-CL') + '</div>' +
-                    '<div style="font-size:10px;color:var(--text-muted)">Prom/km</div></div>' +
+                    '<div style="font-size:16px;font-weight:700;color:var(--secondary)">' + r.totalKm.toFixed(1) + '</div>' +
+                    '<div style="font-size:10px;color:var(--text-muted)">Total km</div></div>' +
                     '<div style="background:var(--bg-input);border-radius:8px;padding:8px;text-align:center">' +
-                    '<div style="font-size:16px;font-weight:700;color:var(--primary-light)">$' + Math.round(Math.min.apply(null, r.registros.map(function(x){return x.ganancia;}))).toLocaleString('es-CL') + '</div>' +
-                    '<div style="font-size:10px;color:var(--text-muted)">Mínimo</div></div>' +
+                    '<div style="font-size:16px;font-weight:700;color:var(--primary-light)">' + minKm.toFixed(1) + '</div>' +
+                    '<div style="font-size:10px;color:var(--text-muted)">Mín km</div></div>' +
                     '<div style="background:var(--bg-input);border-radius:8px;padding:8px;text-align:center">' +
-                    '<div style="font-size:16px;font-weight:700;color:var(--accent)">$' + Math.round(Math.max.apply(null, r.registros.map(function(x){return x.ganancia;}))).toLocaleString('es-CL') + '</div>' +
-                    '<div style="font-size:10px;color:var(--text-muted)">Máximo</div></div></div>' +
+                    '<div style="font-size:16px;font-weight:700;color:var(--accent)">' + maxKm.toFixed(1) + '</div>' +
+                    '<div style="font-size:10px;color:var(--text-muted)">Máx km</div></div></div>' +
                     '<div class="mini-avatars" style="margin-top:10px">' +
                     r.registros.slice(0,4).map(function(x){return '<div class="mini-av">' + (x.avatar||'😎') + '</div>';}).join('') +
                     (r.registros.length > 4 ? '<div class="mini-av" style="font-size:9px;background:var(--bg-input)">+' + (r.registros.length-4) + '</div>' : '') +
