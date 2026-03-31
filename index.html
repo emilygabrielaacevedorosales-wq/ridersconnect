@@ -217,7 +217,8 @@
         <form onsubmit="handleAuth(event)">
             <div class="register-fields" id="registerFields">
                 <div class="form-group"><label>Nombre</label><input type="text" class="form-input" id="regName" placeholder="Tu nombre"></div>
-                <div class="form-group"><label>Comuna</label><select class="form-input" id="regCity"><option value="">Tu comuna</option><option>Santiago</option><option>Providencia</option><option>Las Condes</option><option>Ñuñoa</option><option>Vitacura</option><option>La Reina</option><option>Peñalolén</option><option>La Florida</option><option>Puente Alto</option><option>Maipú</option><option>Valparaíso</option><option>Viña del Mar</option><option>Quilpué</option><option>Villa Alemana</option><option>Concón</option></select></div>
+                <div class="form-group"><label>Ciudad</label><select class="form-input" id="regCiudad" onchange="updateComunas()"><option value="">Tu ciudad</option><option>Santiago</option><option>Valparaíso</option></select></div>
+                <div class="form-group"><label>Comuna</label><select class="form-input" id="regCity"><option value="">Tu comuna</option></select></div>
                 <div class="form-group"><label>Vehículo</label><select class="form-input" id="regVehicle"><option value="">Tipo</option><option>Sedán</option><option>SUV</option><option>Compacto</option></select></div>
             </div>
             <div class="form-group"><label>Correo</label><input type="email" class="form-input" id="authEmail" placeholder="tu@correo.com" required></div>
@@ -373,6 +374,22 @@ let chatListener = null;
 let isRegistering = false;
 const emojis = ['😎','👨‍✈️','👩‍💼','🧑‍💻','👨‍🔧','👩‍🎤','🧔','👩‍🦰','👨‍💻','👩‍🔬'];
 
+const comunas = {
+    'Santiago': ['Santiago', 'Providencia', 'Las Condes', 'Ñuñoa', 'Vitacura', 'La Reina', 'Peñalolén', 'La Florida', 'Puente Alto', 'Maipú'],
+    'Valparaíso': ['Valparaíso', 'Viña del Mar', 'Quilpué', 'Villa Alemana', 'Concón']
+};
+
+function updateComunas() {
+    var city = document.getElementById('regCiudad').value;
+    var comunaSelect = document.getElementById('regCity');
+    comunaSelect.innerHTML = '<option value="">Tu comuna</option>';
+    if (city && comunas[city]) {
+        comunas[city].forEach(function(c) {
+            comunaSelect.innerHTML += '<option>' + c + '</option>';
+        });
+    }
+}
+
 // ===== TOAST =====
 function showToast(msg, type) {
     const t = document.getElementById('toast');
@@ -408,9 +425,10 @@ function handleAuth(e) {
 
     if (isRegistering) {
         var name = document.getElementById('regName').value;
+        var city = document.getElementById('regCiudad').value;
         var comuna = document.getElementById('regCity').value;
         var vehicle = document.getElementById('regVehicle').value;
-        if (!name || !comuna || !vehicle) {
+        if (!name || !city || !comuna || !vehicle) {
             showError('Completa todos los campos');
             btn.disabled = false;
             btn.innerHTML = '📝 Registrarse';
@@ -422,6 +440,7 @@ function handleAuth(e) {
             return db.ref('users/' + cred.user.uid).set({
                 name: name,
                 email: email,
+                city: city,
                 comuna: comuna,
                 vehicle: vehicle,
                 avatar: avatar,
@@ -473,7 +492,7 @@ auth.onAuthStateChanged(function(user) {
         db.ref('users/' + user.uid).once('value').then(function(snap) {
             currentUserData = snap.val();
             if (!currentUserData) {
-                currentUserData = { name: 'Conductor', avatar: '😎', comuna: 'N/A', vehicle: 'Sedán' };
+                currentUserData = { name: 'Conductor', avatar: '😎', city: 'N/A', comuna: 'N/A', vehicle: 'Sedán' };
             }
             enterApp();
         });
