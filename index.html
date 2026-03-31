@@ -480,7 +480,31 @@ function updateComunas() {
         });
     }
 }
+// ===== NAVIGATION =====
+function switchSection(section) {
+    // Hide all sections
+    var sections = document.querySelectorAll('.section');
+    sections.forEach(function(s) {
+        s.classList.remove('active');
+    });
 
+    // Show selected section
+    var target = document.getElementById('sec' + section.charAt(0).toUpperCase() + section.slice(1));
+    if (target) {
+        target.classList.add('active');
+    }
+
+    // Update nav active
+    var navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(function(n) {
+        n.classList.remove('active');
+    });
+
+    var activeNav = document.querySelector('.nav-item[onclick*="switchSection(\'' + section + '\')"]');
+    if (activeNav) {
+        activeNav.classList.add('active');
+    }
+}
 // ===== TOAST =====
 function showToast(msg, type) {
     const t = document.getElementById('toast');
@@ -921,6 +945,108 @@ function updateSlider() {
     document.getElementById('sliderVal').textContent = '$' + parseFloat(val).toFixed(2);
 }
 
+// ===== FEED FUNCTIONS =====
+function createPost() {
+    var content = document.getElementById('newPostInput').value.trim();
+    if (!content) return;
+    db.ref('posts').push({
+        uid: currentUser.uid,
+        user: currentUserData.name,
+        avatar: currentUserData.avatar,
+        city: currentUserData.city,
+        content: content,
+        timestamp: Date.now(),
+        likes: [],
+        comments: []
+    });
+    document.getElementById('newPostInput').value = '';
+    showToast('✅ Post publicado!', 'success');
+}
+
+function listenPosts() {
+    db.ref('posts').orderByChild('timestamp').on('value', function(snap) {
+        var posts = [];
+        snap.forEach(function(child) {
+            var p = child.val();
+            p.id = child.key;
+            posts.push(p);
+        });
+        var feed = document.getElementById('postsFeed');
+        if (posts.length === 0) {
+            feed.innerHTML = '<div class="loading">No hay publicaciones aún. ¡Sé el primero!</div>';
+        } else {
+            feed.innerHTML = posts.slice().reverse().map(function(p) {
+                var time = getTimeAgo(p.timestamp);
+                var liked = p.likes && p.likes.includes(currentUser.uid);
+                var likeCount = p.likes ? p.likes.length : 0;
+                var commentsHTML = '';
+                if (p.comments && p.comments.length > 0) {
+                    commentsHTML = p.comments.map(function(c) {
+                        return '<div class="comment"><div class="user-avatar sm">' + (c.avatar||'😎') + '</div><div class="comment-body"><div class="comment-author">' + c.user + '</div><div class="comment-text">' + c.text + '</div></div></div>';
+                    }).join('');
+                }
+                return '<div class="post-card">' +
+                    '<div class="post-header">' +
+                    '<div class="user-avatar">' + p.avatar + '</div>' +
+                    '<div class="post-user-info"><div class="post-username">' + p.user + '<span class="verified">✓</span></div><div class="post-meta">' + time + ' • ' + (p.city || 'Sin ubicación') + '</div></div>' +
+                    '</div>' +
+                    '<div class="post-content">' + p.content.replace(/\n/g, '<br>') + '</div>' +
+                    '<div class="post-stats"><span>' + likeCount + ' likes</span><span>' + (p.comments ? p.comments.length : 0) + ' comentarios</span></div>' +
+                    '<div class="post-actions-bar">' +
+                    '<button class="action-btn ' + (liked ? 'liked' : '') + '" onclick="likePost(\'' + p.id + '\')"><span>👍</span> Me gusta</button>' +
+                    '<button class="action-btn" onclick="showComments(\'' + p.id + '\')"><span>💬</span> Comentar</button>' +
+                    '</div>' +
+                    '<div class="comments-area" id="comments-' + p.id + '" style="display:none">' +
+                    commentsHTML +
+                    '<div class="comment-input-row"><input type="text" class="comment-input" id="comment-input-' + p.id + '" placeholder="Escribe un comentario..." onkeydown="if(event.key===\'Enter\') addComment(\'' + p.id + '\')"><button class="comment-send" onclick="addComment(\'' + p.id + '\')">➤</button></div>' +
+                    '</div>' +
+                    '</div>';
+            }).join('');
+        }
+    });
+}
+
+function likePost(postId) {
+    var postRef = db.ref('posts/' + postId);
+    postRef.transaction(function(p) {
+        if (!p) return p;
+        if (!p.likes) p.likes = [];
+        var index = p.likes.indexOf(currentUser.uid);
+        if (index > -1) {
+            p.likes.splice(index, 1);
+        } else {
+            p.likes.push(currentUser.uid);
+        }
+        return p;
+    });
+}
+
+function showComments(postId) {
+    var commentsDiv = document.getElementById('comments-' + postId);
+    commentsDiv.style.display = commentsDiv.style.display === 'none' ? 'block' : 'none';
+}
+
+function addComment(postId) {
+    var input = document.getElementById('comment-input-' + postId);
+    var text = input.value.trim();
+    if (!text) return;
+    var comment = {
+        uid: currentUser.uid,
+        user: currentUserData.name,
+        avatar: currentUserData.avatar,
+        text: text,
+        timestamp: Date.now()
+    };
+    var postRef = db.ref('posts/' + postId);
+    postRef.transaction(function(p) {
+        if (!p) return p;
+        if (!p.comments) p.comments = [];
+        p.comments.push(comment);
+        return p;
+    });
+    input.value = '';
+}
+
 // ===== PERFIL FUNCTIONS =====
 function enterApp() {
     document.getElementById('loginScreen').style.display = 'none';
@@ -939,6 +1065,8 @@ function enterApp() {
     listenOnline();
     listenPosts();
     listenTarifas();
+
+    switchSection('feed');
 
     showToast('👋 Bienvenido ' + currentUserData.name, 'success');
 }
