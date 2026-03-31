@@ -217,7 +217,7 @@
         <form onsubmit="handleAuth(event)">
             <div class="register-fields" id="registerFields">
                 <div class="form-group"><label>Nombre</label><input type="text" class="form-input" id="regName" placeholder="Tu nombre"></div>
-                <div class="form-group"><label>Ciudad</label><select class="form-input" id="regCity"><option value="">Tu ciudad</option><option>CDMX</option><option>Bogotá</option><option>Lima</option><option>Buenos Aires</option><option>Santiago</option><option>Medellín</option></select></div>
+                <div class="form-group"><label>Comuna</label><select class="form-input" id="regCity"><option value="">Tu comuna</option><option>Santiago</option><option>Providencia</option><option>Las Condes</option><option>Ñuñoa</option><option>Vitacura</option><option>La Reina</option><option>Peñalolén</option><option>La Florida</option><option>Puente Alto</option><option>Maipú</option><option>Valparaíso</option><option>Viña del Mar</option><option>Quilpué</option><option>Villa Alemana</option><option>Concón</option></select></div>
                 <div class="form-group"><label>Vehículo</label><select class="form-input" id="regVehicle"><option value="">Tipo</option><option>Sedán</option><option>SUV</option><option>Compacto</option></select></div>
             </div>
             <div class="form-group"><label>Correo</label><input type="email" class="form-input" id="authEmail" placeholder="tu@correo.com" required></div>
@@ -225,8 +225,7 @@
             <div class="error-msg" id="authError"></div>
             <button type="submit" class="btn btn-primary" id="authBtn">🔐 Iniciar Sesión</button>
         </form>
-        <div class="login-divider"><span>acceso rápido</span></div>
-        <button class="btn btn-secondary" onclick="anonLogin()">⚡ Entrar como invitado</button>
+
     </div>
 </div>
 
@@ -409,9 +408,9 @@ function handleAuth(e) {
 
     if (isRegistering) {
         var name = document.getElementById('regName').value;
-        var city = document.getElementById('regCity').value;
+        var comuna = document.getElementById('regCity').value;
         var vehicle = document.getElementById('regVehicle').value;
-        if (!name || !city || !vehicle) {
+        if (!name || !comuna || !vehicle) {
             showError('Completa todos los campos');
             btn.disabled = false;
             btn.innerHTML = '📝 Registrarse';
@@ -423,7 +422,7 @@ function handleAuth(e) {
             return db.ref('users/' + cred.user.uid).set({
                 name: name,
                 email: email,
-                city: city,
+                comuna: comuna,
                 vehicle: vehicle,
                 avatar: avatar,
                 createdAt: Date.now()
@@ -445,23 +444,6 @@ function handleAuth(e) {
             btn.innerHTML = '🔐 Iniciar Sesión';
         });
     }
-}
-
-function anonLogin() {
-    auth.signInAnonymously()
-    .then(function(cred) {
-        return db.ref('users/' + cred.user.uid).set({
-            name: 'Conductor ' + Math.floor(Math.random()*999),
-            email: 'invitado',
-            city: 'Sin definir',
-            vehicle: 'Sedán',
-            avatar: emojis[Math.floor(Math.random() * emojis.length)],
-            createdAt: Date.now()
-        });
-    })
-    .catch(function(err) {
-        showError('Error: ' + err.message);
-    });
 }
 
 function translateError(code) {
@@ -491,7 +473,7 @@ auth.onAuthStateChanged(function(user) {
         db.ref('users/' + user.uid).once('value').then(function(snap) {
             currentUserData = snap.val();
             if (!currentUserData) {
-                currentUserData = { name: 'Conductor', avatar: '😎', city: 'N/A', vehicle: 'Sedán' };
+                currentUserData = { name: 'Conductor', avatar: '😎', comuna: 'N/A', vehicle: 'Sedán' };
             }
             enterApp();
         });
