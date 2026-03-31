@@ -853,6 +853,7 @@ function listenTarifas() {
         var viajes = [];
         var rutas = {};
         var totalKm = 0;
+        var totalValor = 0;
         var myViajes = 0;
         var myKm = 0;
         var myRutas = {};
@@ -869,12 +870,15 @@ function listenTarifas() {
                     comunaB: v.comunaB, 
                     registros: [], 
                     totalKm: 0,
+                    totalValor: 0,
                     intercomunal: v.intercomunal 
                 };
             }
             rutas[v.rutaKey].registros.push(v);
             rutas[v.rutaKey].totalKm += v.km;
+            rutas[v.rutaKey].totalValor += (v.ganancia || 0);
             totalKm += v.km;
+            totalValor += (v.ganancia || 0);
 
             // Mis stats
             if (currentUser && v.uid === currentUser.uid) {
@@ -888,8 +892,8 @@ function listenTarifas() {
         // Stats generales
         document.getElementById('statRegistros').textContent = viajes.length;
         document.getElementById('statRutas').textContent = Object.keys(rutas).length;
-        var promKm = viajes.length > 0 ? (totalKm / viajes.length).toFixed(1) : 0;
-        document.getElementById('statPromedio').textContent = promKm + ' km';
+        var promValor = viajes.length > 0 ? Math.round(totalValor / viajes.length) : 0;
+        document.getElementById('statPromedio').textContent = '$' + promValor.toLocaleString('es-CL');
 
         // Stats perfil
         document.getElementById('profileViajes').textContent = myViajes;
@@ -928,6 +932,7 @@ function listenTarifas() {
         } else {
             promList.innerHTML = rutasArr.map(function(r) {
                 var promKmViaje = (r.totalKm / r.registros.length).toFixed(1);
+                var promValorRuta = r.registros.length > 0 ? Math.round(r.totalValor / r.registros.length) : 0;
                 var minKm = Math.min.apply(null, r.registros.map(function(x){return x.km;}));
                 var maxKm = Math.max.apply(null, r.registros.map(function(x){return x.km;}));
 
@@ -935,7 +940,7 @@ function listenTarifas() {
                     '<div class="tarifa-item-header"><div>' +
                     '<h4>' + (r.intercomunal ? '🔄 ' : '📍 ') + r.comunaA + ' → ' + r.comunaB + '</h4>' +
                     '<div class="sub">' + r.registros.length + ' registros • Prom: ' + promKmViaje + ' km</div></div>' +
-                    '<div class="price-badge">' + promKmViaje + ' km</div></div>' +
+                    '<div class="price-badge">$' + promValorRuta.toLocaleString('es-CL') + '</div></div>' +
                     '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px">' +
                     '<div style="background:var(--bg-input);border-radius:8px;padding:8px;text-align:center">' +
                     '<div style="font-size:16px;font-weight:700;color:var(--secondary)">' + r.totalKm.toFixed(1) + '</div>' +
@@ -995,17 +1000,25 @@ function listenNotifications() {
 }
 
 function listenOnline() {
-    // Listen for online users in the same comuna
+    // Listen for online users in real time
     db.ref('online').orderByChild('time').on('value', function(snap) {
-        var onlineUsers = [];
+        var totalUsers = snap.numChildren();
+        var sameComuna = 0;
+
         snap.forEach(function(child) {
             var user = child.val();
-            if (user.comuna === currentUserData.comuna) {
-                onlineUsers.push(user);
+            if (user.comuna && currentUserData && user.comuna === currentUserData.comuna) {
+                sameComuna++;
             }
         });
-        // For now, just log or do nothing; can be extended to display online users
-        console.log('Online users in comuna:', onlineUsers.length);
+
+        var onlineCountEl = document.getElementById('onlineCount');
+        if (onlineCountEl) {
+            onlineCountEl.textContent = totalUsers;
+            onlineCountEl.title = 'Usuarios en línea: ' + totalUsers + (currentUserData && currentUserData.comuna ? ' (comuna ' + currentUserData.comuna + ': ' + sameComuna + ')' : '');
+        }
+
+        console.log('Online users total:', totalUsers, 'same comuna:', sameComuna);
     });
 }
 
