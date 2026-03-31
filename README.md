@@ -45,8 +45,4 @@ Los conductores pueden:
 
 ---
 
-## 🛠️ Instalación
 
-1. Clona el repositorio:
-```bash
-git clone https://github.com/TU-USUARIO/ridersconnect.git
