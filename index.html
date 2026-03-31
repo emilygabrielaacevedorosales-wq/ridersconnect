@@ -271,41 +271,16 @@
             <!-- FORMULARIO REGISTRO DE VIAJE -->
             <div class="tarifa-form">
                 <h3>🚗 Registrar viaje</h3>
+                <div class="form-group"><label>Ciudad</label><select class="form-input" id="tarifaCiudad" onchange="updateTarifaComunas()"><option value="Santiago">Santiago</option><option value="Valparaíso">Valparaíso</option></select></div>
                 <div class="form-row">
                     <div class="form-group"><label>Comuna Origen</label>
                         <select class="form-input" id="comunaA">
                             <option value="">Selecciona</option>
-                            <option value="Santiago Centro">Santiago Centro</option>
-                            <option value="Providencia">Providencia</option>
-                            <option value="Las Condes">Las Condes</option>
-                            <option value="Ñuñoa">Ñuñoa</option>
-                            <option value="La Florida">La Florida</option>
-                            <option value="Maipú">Maipú</option>
-                            <option value="Puente Alto">Puente Alto</option>
-                            <option value="San Bernardo">San Bernardo</option>
-                            <option value="Viña del Mar">Viña del Mar</option>
-                            <option value="Valparaíso">Valparaíso</option>
-                            <option value="Concón">Concón</option>
-                            <option value="Quilpué">Quilpué</option>
-                            <option value="Villa Alemana">Villa Alemana</option>
                         </select>
                     </div>
                     <div class="form-group"><label>Comuna Destino</label>
                         <select class="form-input" id="comunaB">
                             <option value="">Selecciona</option>
-                            <option value="Santiago Centro">Santiago Centro</option>
-                            <option value="Providencia">Providencia</option>
-                            <option value="Las Condes">Las Condes</option>
-                            <option value="Ñuñoa">Ñuñoa</option>
-                            <option value="La Florida">La Florida</option>
-                            <option value="Maipú">Maipú</option>
-                            <option value="Puente Alto">Puente Alto</option>
-                            <option value="San Bernardo">San Bernardo</option>
-                            <option value="Viña del Mar">Viña del Mar</option>
-                            <option value="Valparaíso">Valparaíso</option>
-                            <option value="Concón">Concón</option>
-                            <option value="Quilpué">Quilpué</option>
-                            <option value="Villa Alemana">Villa Alemana</option>
                         </select>
                     </div>
                 </div>
@@ -358,18 +333,24 @@
 
         <!-- CHAT -->
         <section class="section" id="secChat">
-            <div class="sec-header"><h2>💬 Chat en Vivo</h2><p>Tiempo real con todos los conductores</p></div>
-            <div id="chatRoomsList">
-                <div class="chat-room" onclick="openChat('general')"><div class="chat-icon" style="background:rgba(124,58,237,.2)">💬</div><div class="chat-info"><div class="chat-name">Chat General</div><div class="chat-last">Todos los conductores</div></div><div class="chat-meta"><div class="chat-time">🔴 Vivo</div></div></div>
-                <div class="chat-room" onclick="openChat('tarifas')"><div class="chat-icon" style="background:rgba(16,185,129,.2)">💰</div><div class="chat-info"><div class="chat-name">Tarifas</div><div class="chat-last">Discute precios</div></div><div class="chat-meta"><div class="chat-time">🔴 Vivo</div></div></div>
-                <div class="chat-room" onclick="openChat('emergencias')"><div class="chat-icon" style="background:rgba(239,68,68,.2)">🚨</div><div class="chat-info"><div class="chat-name">Emergencias</div><div class="chat-last">Alertas</div></div><div class="chat-meta"><div class="chat-time">🔴 Vivo</div></div></div>
-                <div class="chat-room" onclick="openChat('tips')"><div class="chat-icon" style="background:rgba(245,158,11,.2)">💡</div><div class="chat-info"><div class="chat-name">Tips</div><div class="chat-last">Consejos</div></div><div class="chat-meta"><div class="chat-time">🔴 Vivo</div></div></div>
+            <div class="sec-header"><h2>💬 Chat por Comuna</h2><p>Conversa con conductores de tu zona</p></div>
+            
+            <div class="form-row" style="padding:16px">
+                <div class="form-group"><label>Ciudad</label><select class="form-input" id="chatCiudad" onchange="updateChatComunas()"><option value="">Selecciona ciudad</option><option>Santiago</option><option>Valparaíso</option></select></div>
+                <div class="form-group"><label>Comuna</label><select class="form-input" id="chatComuna"><option value="">Selecciona comuna</option></select></div>
             </div>
+            <button class="btn btn-primary" onclick="joinChat()" style="margin:0 16px 16px">Unirse al chat</button>
+            
             <div class="chat-view" id="chatView">
                 <div class="chat-view-header">
                     <button class="chat-back" onclick="closeChat()">⬅️</button>
                     <div class="chat-icon" style="background:rgba(124,58,237,.2);width:40px;height:40px;font-size:18px" id="chatViewIcon">💬</div>
                     <div style="flex:1"><div class="chat-name" id="chatViewName">Chat</div><div style="font-size:12px;color:var(--text-muted)">🔴 En vivo</div></div>
+            <div style="display:flex;gap:4px">
+                <button class="btn btn-small" onclick="switchChatTopic('general')">💬</button>
+                <button class="btn btn-small" onclick="switchChatTopic('emergencias')">🚨</button>
+                <button class="btn btn-small" onclick="switchChatTopic('tarifas')">💰</button>
+            </div>
                 </div>
                 <div class="chat-messages" id="chatMessages"></div>
                 <div class="chat-input-area">
@@ -419,6 +400,12 @@
                         <div style="font-size:11px;color:var(--text-muted)">Días activo</div>
                     </div>
                 </div>
+            </div>
+
+            <!-- NOTIFICACIONES -->
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:16px">
+                <h4 style="font-size:14px;margin-bottom:12px">🔔 Notificaciones</h4>
+                <div id="notificationsList">No hay notificaciones</div>
             </div>
 
             <!-- MENÚ -->
@@ -480,6 +467,48 @@ function updateComunas() {
         });
     }
 }
+
+function updateChatComunas() {
+    var city = document.getElementById('chatCiudad').value;
+    var comunaSelect = document.getElementById('chatComuna');
+    comunaSelect.innerHTML = '<option value="">Selecciona comuna</option>';
+    if (city && comunas[city]) {
+        comunas[city].forEach(function(c) {
+            comunaSelect.innerHTML += '<option value="' + c + '">' + c + '</option>';
+        });
+    }
+}
+
+function joinChat() {
+    var comuna = document.getElementById('chatComuna').value;
+    if (!comuna) {
+        showToast('Selecciona una comuna para unirte al chat', 'info');
+        return;
+    }
+    openChat(comuna + '-general');
+}
+
+function switchChatTopic(topic) {
+    var comuna = currentChat.split('-')[0];
+    openChat(comuna + '-' + topic);
+}
+
+function populateComunaSelects() {
+    var city = currentUserData.city;
+    document.getElementById('tarifaCiudad').value = city;
+    updateTarifaComunas();
+}
+
+function updateTarifaComunas() {
+    var city = document.getElementById('tarifaCiudad').value;
+    var comunasList = comunas[city] || [];
+    var options = '<option value="">Selecciona</option>' + comunasList.map(function(c) {
+        return '<option value="' + c + '">' + c + '</option>';
+    }).join('');
+    document.getElementById('comunaA').innerHTML = options;
+    document.getElementById('comunaB').innerHTML = options;
+}
+
 // ===== NAVIGATION =====
 function switchSection(section) {
     // Hide all sections
@@ -622,13 +651,17 @@ auth.onAuthStateChanged(function(user) {
 // // ===== CHAT EN TIEMPO REAL =====
 function openChat(room) {
     currentChat = room;
-    var names = {general:'Chat General', tarifas:'Tarifas y Precios', emergencias:'Emergencias', tips:'Tips y Consejos'};
-    var icons = {general:'💬', tarifas:'💰', emergencias:'🚨', tips:'💡'};
+    var parts = room.split('-');
+    var comuna = parts[0];
+    var topic = parts[1] || 'general';
+    var topicNames = {general: 'General', emergencias: 'Emergencias', tarifas: 'Tarifas'};
+    var topicIcons = {general: '💬', emergencias: '🚨', tarifas: '💰'};
+    var name = topicNames[topic] + ' - ' + comuna;
+    var icon = topicIcons[topic];
 
-    document.getElementById('chatRoomsList').style.display = 'none';
     document.getElementById('chatView').classList.add('active');
-    document.getElementById('chatViewName').textContent = names[room] || room;
-    document.getElementById('chatViewIcon').textContent = icons[room] || '💬';
+    document.getElementById('chatViewName').textContent = name;
+    document.getElementById('chatViewIcon').textContent = icon;
 
     // Remove old listener
     if (chatListener) {
@@ -675,7 +708,6 @@ function closeChat() {
         db.ref('chats/' + currentChat).off('value', chatListener);
         chatListener = null;
     }
-    document.getElementById('chatRoomsList').style.display = 'block';
     document.getElementById('chatView').classList.remove('active');
 }
 
@@ -787,6 +819,7 @@ function registrarViaje() {
         user: currentUserData.name,
         avatar: currentUserData.avatar,
         city: currentUserData.city,
+        comuna: currentUserData.comuna,
         content: '📊 Registré un viaje: <strong>' + rutaKey + '</strong> | ' + km + ' km | $' + ganancia.toLocaleString('es-CL') + ' | <span class="tag">$' + porKm.toLocaleString('es-CL') + '/km</span>' + (esIntercomunal ? ' 🔄 Intercomunal' : ''),
         timestamp: Date.now(),
         hasFare: true,
@@ -940,6 +973,25 @@ function listenTarifas() {
     });
 }
 
+function listenNotifications() {
+    db.ref('notifications/' + currentUser.uid).orderByChild('timestamp').on('value', function(snap) {
+        var notifs = [];
+        snap.forEach(function(child) {
+            notifs.push(child.val());
+        });
+        var list = document.getElementById('notificationsList');
+        if (notifs.length === 0) {
+            list.innerHTML = 'No hay notificaciones';
+        } else {
+            list.innerHTML = notifs.slice().reverse().map(function(n) {
+                var time = getTimeAgo(n.timestamp);
+                var msg = n.fromUser + ' ' + (n.type === 'like' ? 'le dio me gusta a tu post' : 'comentó en tu post');
+                return '<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:13px">' + msg + ' • ' + time + '</div>';
+            }).join('');
+        }
+    });
+}
+
 function updateSlider() {
     var val = document.getElementById('tarifaSlider').value;
     document.getElementById('sliderVal').textContent = '$' + parseFloat(val).toFixed(2);
@@ -954,6 +1006,7 @@ function createPost() {
         user: currentUserData.name,
         avatar: currentUserData.avatar,
         city: currentUserData.city,
+        comuna: currentUserData.comuna,
         content: content,
         timestamp: Date.now(),
         likes: [],
@@ -964,18 +1017,29 @@ function createPost() {
 }
 
 function listenPosts() {
-    db.ref('posts').orderByChild('timestamp').on('value', function(snap) {
+    db.ref('posts').on('value', function(snap) {
         var posts = [];
         snap.forEach(function(child) {
             var p = child.val();
             p.id = child.key;
             posts.push(p);
         });
+
+        // Sort: same comuna first, then by timestamp descending
+        posts.sort(function(a, b) {
+            var aSameComuna = (a.comuna === currentUserData.comuna) ? 1 : 0;
+            var bSameComuna = (b.comuna === currentUserData.comuna) ? 1 : 0;
+            if (aSameComuna !== bSameComuna) {
+                return bSameComuna - aSameComuna;
+            }
+            return b.timestamp - a.timestamp;
+        });
+
         var feed = document.getElementById('postsFeed');
         if (posts.length === 0) {
             feed.innerHTML = '<div class="loading">No hay publicaciones aún. ¡Sé el primero!</div>';
         } else {
-            feed.innerHTML = posts.slice().reverse().map(function(p) {
+            feed.innerHTML = posts.map(function(p) {
                 var time = getTimeAgo(p.timestamp);
                 var liked = p.likes && p.likes.includes(currentUser.uid);
                 var likeCount = p.likes ? p.likes.length : 0;
@@ -1018,6 +1082,19 @@ function likePost(postId) {
             p.likes.push(currentUser.uid);
         }
         return p;
+    }).then(function() {
+        // Add notification if not own post
+        postRef.once('value', function(snap) {
+            var p = snap.val();
+            if (p && p.uid !== currentUser.uid) {
+                db.ref('notifications/' + p.uid).push({
+                    type: 'like',
+                    fromUser: currentUserData.name,
+                    postId: postId,
+                    timestamp: Date.now()
+                });
+            }
+        });
     });
 }
 
@@ -1043,6 +1120,19 @@ function addComment(postId) {
         if (!p.comments) p.comments = [];
         p.comments.push(comment);
         return p;
+    }).then(function() {
+        // Add notification if not own post
+        postRef.once('value', function(snap) {
+            var p = snap.val();
+            if (p && p.uid !== currentUser.uid) {
+                db.ref('notifications/' + p.uid).push({
+                    type: 'comment',
+                    fromUser: currentUserData.name,
+                    postId: postId,
+                    timestamp: Date.now()
+                });
+            }
+        });
     });
     input.value = '';
 }
@@ -1065,6 +1155,8 @@ function enterApp() {
     listenOnline();
     listenPosts();
     listenTarifas();
+    listenNotifications();
+    populateComunaSelects();
 
     switchSection('feed');
 
