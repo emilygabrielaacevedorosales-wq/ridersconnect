@@ -73,6 +73,8 @@
         .create-post-actions{display:flex;justify-content:space-between;align-items:center}
         .post-attachments{display:flex;gap:2px}
         .attach-btn{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:10px;cursor:pointer;font-size:16px;background:none;border:none;color:var(--text-muted);transition:all .3s}
+        .user-link{color:var(--primary-light);font-weight:700;text-decoration:none;cursor:pointer}
+        .user-link:hover{text-decoration:underline}
         .attach-btn:hover{background:var(--bg-input);color:var(--primary-light)}
 
         .post-card{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:12px;animation:slideUp .4s ease-out;position:relative}
@@ -110,6 +112,7 @@
         .comment-body{background:var(--bg-input);padding:8px 12px;border-radius:12px;font-size:13px;flex:1}
         .comment-author{font-weight:600;font-size:12px;margin-bottom:2px}
         .comment-text{color:var(--text-secondary);line-height:1.4}
+        .comment-delete{background:none;border:none;color:var(--danger);font-size:11px;font-weight:600;cursor:pointer;margin-left:8px}
         .comment-input-row{display:flex;gap:8px;margin-top:8px}
         .comment-input{flex:1;padding:10px 14px;background:var(--bg-input);border:1px solid var(--border);border-radius:20px;color:var(--text-primary);font-family:'Inter',sans-serif;font-size:13px;outline:none}
         .comment-send{padding:10px 16px;background:var(--gradient-1);border:none;border-radius:20px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif}
@@ -377,12 +380,24 @@
             <div class="profile-name" id="profileName">Conductor</div>
             <div class="profile-handle" id="profileHandle">@conductor</div>
             <div style="text-align:center;color:var(--text-muted);font-size:13px;margin-bottom:12px" id="profileCity">📍 Santiago</div>
-            <div style="text-align:center;color:var(--text-muted);font-size:13px;margin-bottom:16px" id="profileVehicle">🚗 Sedán</div>
+            <div style="text-align:center;color:var(--text-muted);font-size:13px;margin-bottom:8px" id="profileVehicle">🚗 Sedán</div>
+            <div style="text-align:center;margin-bottom:16px"><button class="btn btn-small" id="profileFriendBtn" style="min-width:160px;display:none" onclick="toggleFriend()">Agregar amigo</button></div>
 
             <div class="profile-stats">
                 <div class="profile-stat"><div class="val" id="profilePosts">0</div><div class="lbl">Posts</div></div>
                 <div class="profile-stat"><div class="val" id="profileViajes">0</div><div class="lbl">Viajes</div></div>
                 <div class="profile-stat"><div class="val" id="profileKmTotal">0 km</div><div class="lbl">Km recorridos</div></div>
+                <div class="profile-stat"><div class="val" id="profileComentarios">0</div><div class="lbl">Comentarios</div></div>
+                <div class="profile-stat"><div class="val" id="profileAmigos">0</div><div class="lbl">Amigos</div></div>
+            </div>
+
+            <div id="adminPanel" style="display:none;margin-top:16px;padding:12px;background:rgba(16,185,129,.1);border:1px solid var(--border);border-radius:12px;">
+                <div style="font-weight:700;margin-bottom:8px">⚙️ Panel Admin</div>
+                <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+                    <input type="email" id="modEmail" placeholder="Correo usuario a moderador" class="form-input" style="flex:1;min-width:220px" />
+                    <button class="btn btn-small" onclick="toggleModerator()">Conceder/Revocar moderador</button>
+                </div>
+                <div style="font-size:12px;color:var(--text-muted)">Puedes otorgar o retirar rol de moderador a cualquier usuario.</div>
             </div>
 
             <div class="badges" id="profileBadges">
@@ -455,6 +470,7 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.database();
 
+const adminEmail = 'emilygabreilaacevedorosales@gmail.com';
 let currentUser = null;
 let currentUserData = null;
 let currentChat = 'general';
@@ -591,6 +607,7 @@ function handleAuth(e) {
         auth.createUserWithEmailAndPassword(email, pass)
         .then(function(cred) {
             var avatar = emojis[Math.floor(Math.random() * emojis.length)];
+            var role = email.toLowerCase() === adminEmail.toLowerCase() ? 'admin' : 'user';
             return db.ref('users/' + cred.user.uid).set({
                 name: name,
                 email: email,
@@ -598,6 +615,8 @@ function handleAuth(e) {
                 comuna: comuna,
                 vehicle: vehicle,
                 avatar: avatar,
+                role: role,
+                friends: [],
                 createdAt: Date.now()
             });
         })
@@ -646,7 +665,13 @@ auth.onAuthStateChanged(function(user) {
         db.ref('users/' + user.uid).once('value').then(function(snap) {
             currentUserData = snap.val();
             if (!currentUserData) {
-                currentUserData = { name: 'Conductor', avatar: '😎', city: 'N/A', comuna: 'N/A', vehicle: 'Sedán' };
+                currentUserData = { name: 'Conductor', avatar: '😎', city: 'N/A', comuna: 'N/A', vehicle: 'Sedán', role: 'user' };
+            }
+            if (!currentUserData.role) {
+                currentUserData.role = 'user';
+            }
+            if (currentUser.email && currentUser.email.toLowerCase() === adminEmail.toLowerCase()) {
+                currentUserData.role = 'admin';
             }
             enterApp();
         });
@@ -1074,16 +1099,20 @@ function listenPosts() {
                 var liked = p.likes && p.likes.includes(currentUser.uid);
                 var likeCount = p.likes ? p.likes.length : 0;
                 var commentsHTML = '';
+                var isMod = currentUserData && (currentUserData.role === 'moderator' || currentUserData.role === 'admin');
                 if (p.comments && p.comments.length > 0) {
-                    commentsHTML = p.comments.map(function(c) {
-                        return '<div class="comment"><div class="user-avatar sm">' + (c.avatar||'😎') + '</div><div class="comment-body"><div class="comment-author">' + c.user + '</div><div class="comment-text">' + c.text + '</div></div></div>';
+                    commentsHTML = p.comments.map(function(c, idx) {
+                        var canDelete = isMod || (currentUser && c.uid === currentUser.uid);
+                        return '<div class="comment"><div class="user-avatar sm">' + (c.avatar||'😎') + '</div><div class="comment-body"><div class="comment-author">' + c.user + '</div><div class="comment-text">' + c.text + '</div></div>' +
+                            (canDelete ? '<button class="comment-delete" onclick="deleteComment(\'' + p.id + '\',' + idx + ')">Eliminar</button>' : '') +
+                            '</div>';
                     }).join('');
                 }
                 return '<div class="post-card">' +
                     (p.uid === currentUser.uid ? '<button class="post-menu-btn" data-postid="' + p.id + '" onclick="togglePostMenu(this.dataset.postid)">⋮</button>' : '') +
                     '<div class="post-header">' +
                     '<div class="user-avatar">' + p.avatar + '</div>' +
-                    '<div class="post-user-info"><div class="post-username">' + p.user + '<span class="verified">✓</span></div><div class="post-meta">' + time + ' • ' + (p.city || 'Sin ubicación') + '</div></div>' +
+                    '<div class="post-user-info"><div class="post-username"><span class="user-link" onclick="openUserProfile(\'' + p.uid + '\')">' + p.user + '</span><span class="verified">✓</span></div><div class="post-meta">' + time + ' • ' + (p.city || 'Sin ubicación') + '</div></div>' +
                     '</div>' +
                     '<div class="post-menu" id="menu-' + p.id.replace(/[^a-zA-Z0-9]/g, '_') + '" style="display:none">' +
                     '<button onclick="editPost(\'' + p.id + '\')">✏️ Editar</button>' +
@@ -1136,6 +1165,117 @@ function likePost(postId) {
 function showComments(postId) {
     var commentsDiv = document.getElementById('comments-' + postId.replace(/[^a-zA-Z0-9]/g, '_'));
     commentsDiv.style.display = commentsDiv.style.display === 'none' ? 'block' : 'none';
+}
+
+var viewedUserId = null;
+
+function openUserProfile(userId) {
+    if (!userId) return;
+    viewedUserId = userId;
+
+    db.ref('users/' + userId).once('value').then(function(snap) {
+        var user = snap.val();
+        if (!user) {
+            showToast('Usuario no encontrado', 'danger');
+            return;
+        }
+
+        document.getElementById('profileAvatar').textContent = user.avatar || '😎';
+        document.getElementById('profileName').textContent = user.name || 'Conductor';
+        document.getElementById('profileHandle').textContent = '@' + (user.name || 'conductor').toLowerCase().replace(/ /g, '_');
+        document.getElementById('profileCity').textContent = '📍 ' + (user.city || 'Sin definir') + ' • ' + (user.comuna || 'Sin definir');
+        document.getElementById('profileVehicle').textContent = '🚗 ' + (user.vehicle || 'Sedán');
+
+        // Mostrar botón amigo para perfiles ajenos
+        var friendBtn = document.getElementById('profileFriendBtn');
+        if (currentUser && currentUser.uid !== userId) {
+            friendBtn.style.display = 'inline-block';
+            var isFriend = currentUserData && currentUserData.friends && currentUserData.friends.includes(userId);
+            friendBtn.textContent = isFriend ? 'Eliminar amigo' : 'Agregar amigo';
+        } else {
+            friendBtn.style.display = 'none';
+        }
+
+        // Estats públicos
+        var kmTotal = 0;
+        var viajesCount = 0;
+        var postsCount = 0;
+        var commentsCount = 0;
+
+        db.ref('posts').once('value', function(postsSnap) {
+            postsSnap.forEach(function(postChild) {
+                var p = postChild.val();
+                if (p.uid === userId) {
+                    postsCount++;
+                    if (p.km) kmTotal += parseFloat(p.km) || 0;
+                    if (p.viajeKm) kmTotal += parseFloat(p.viajeKm) || 0;
+                }
+                if (p.comments && p.comments.length) {
+                    p.comments.forEach(function(c) {
+                        if (c.uid === userId) commentsCount++;
+                    });
+                }
+            });
+
+            db.ref('viajes').once('value', function(viajesSnap) {
+                viajesSnap.forEach(function(vChild) {
+                    var v = vChild.val();
+                    if (v.uid === userId) {
+                        viajesCount++;
+                        kmTotal += parseFloat(v.km) || 0;
+                    }
+                });
+
+                document.getElementById('profilePosts').textContent = postsCount;
+                document.getElementById('profileViajes').textContent = viajesCount;
+                document.getElementById('profileKmTotal').textContent = kmTotal.toFixed(1) + ' km';
+                document.getElementById('profileComentarios').textContent = commentsCount;
+                document.getElementById('profileAmigos').textContent = (user.friends ? user.friends.length : 0);
+
+                switchSection('perfil');
+            });
+        });
+    });
+}
+
+function toggleFriend() {
+    if (!currentUser || !viewedUserId || currentUser.uid === viewedUserId) return;
+
+    db.ref('users/' + currentUser.uid + '/friends').transaction(function(friends) {
+        friends = friends || [];
+        if (!Array.isArray(friends)) friends = [];
+        var index = friends.indexOf(viewedUserId);
+        if (index > -1) {
+            friends.splice(index, 1);
+        } else {
+            friends.push(viewedUserId);
+        }
+        return friends;
+    }).then(function() {
+        db.ref('users/' + viewedUserId + '/friends').transaction(function(friends) {
+            friends = friends || [];
+            if (!Array.isArray(friends)) friends = [];
+            var index = friends.indexOf(currentUser.uid);
+            if (index > -1) {
+                friends.splice(index, 1);
+            } else {
+                friends.push(currentUser.uid);
+            }
+            return friends;
+        }).then(function() {
+            // Refrescar perfil actual y local
+            if (currentUserData && currentUserData.friends) {
+                var idx = currentUserData.friends.indexOf(viewedUserId);
+                if (idx > -1) {
+                    currentUserData.friends.splice(idx, 1);
+                } else {
+                    currentUserData.friends.push(viewedUserId);
+                }
+            }
+            openUserProfile(viewedUserId);
+            showToast('✅ Amistad actualizada', 'success');
+        });
+    });
 }
 
 function togglePostMenu(postId) {
@@ -1192,6 +1332,25 @@ function addComment(postId) {
     input.value = '';
 }
 
+function deleteComment(postId, commentIndex) {
+    var postRef = db.ref('posts/' + postId);
+    postRef.transaction(function(p) {
+        if (!p || !p.comments || commentIndex < 0 || commentIndex >= p.comments.length) return p;
+
+        var isMod = currentUserData && (currentUserData.role === 'moderator' || currentUserData.role === 'admin');
+        var comment = p.comments[commentIndex];
+        if (!comment) return p;
+
+        if (!isMod && (!currentUser || comment.uid !== currentUser.uid)) {
+            showToast('❌ Solo puedes eliminar tus propios comentarios', 'warning');
+            return p;
+        }
+
+        p.comments.splice(commentIndex, 1);
+        return p;
+    });
+}
+
 // ===== PERFIL FUNCTIONS =====
 function enterApp() {
     document.getElementById('loginScreen').style.display = 'none';
@@ -1213,6 +1372,7 @@ function enterApp() {
     listenNotifications();
     populateComunaSelects();
 
+    updateProfileAdminPanel();
     switchSection('feed');
 
     showToast('👋 Bienvenido ' + currentUserData.name, 'success');
@@ -1226,6 +1386,46 @@ function editProfile() {
         document.getElementById('profileName').textContent = newName.trim();
         document.getElementById('profileHandle').textContent = '@' + newName.trim().toLowerCase().replace(/ /g,'_');
         showToast('✅ Nombre actualizado', 'success');
+    }
+}
+
+function toggleModerator() {
+    var email = document.getElementById('modEmail').value.trim().toLowerCase();
+    if (!email) { showToast('✉️ Ingresa un correo válido', 'info'); return; }
+
+    db.ref('users').orderByChild('email').equalTo(email).once('value').then(function(snap) {
+        if (!snap.exists()) {
+            showToast('❌ Usuario no encontrado', 'danger');
+            return;
+        }
+
+        var userId = Object.keys(snap.val())[0];
+        var user = snap.val()[userId];
+        if (!user) {
+            showToast('❌ Usuario no encontrado', 'danger');
+            return;
+        }
+
+        if (user.role === 'admin') {
+            showToast('🔒 No puedes cambiar el rol del administrador', 'warning');
+            return;
+        }
+
+        var newRole = (user.role === 'moderator') ? 'user' : 'moderator';
+        db.ref('users/' + userId + '/role').set(newRole).then(function() {
+            showToast('✅ Rol actualizado a ' + newRole, 'success');
+        });
+    });
+}
+
+function updateProfileAdminPanel() {
+    var panel = document.getElementById('adminPanel');
+    if (!panel) return;
+
+    if (currentUserData && currentUserData.role === 'admin') {
+        panel.style.display = 'block';
+    } else {
+        panel.style.display = 'none';
     }
 }
 
