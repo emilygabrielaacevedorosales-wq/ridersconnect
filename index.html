@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RidersConnect - Red de Conductores</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#7C3AED">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+        :root {
+            --primary: #7C3AED;
+            --primary-light: #8B5CF6;
+            --primary-dark: #6D28D9;
+            --secondary: #10B981;
+            --accent: #F59E0B;
+            --danger: #EF4444;
+            --bg-dark: #0F0F1A;
+            --bg-card: #1A1A2E;
+            --bg-card-hover: #222240;
+            --bg-input: #16162A;
+            --text-primary: #FFFFFF;
+            --text-secondary: #A0A0C0;
+            --text-muted: #6B6B8D;
+            --border: #2A2A4A;
+            --gradient-1: linear-gradient(135deg, #7C3AED, #3B82F6);
+            --gradient-2: linear-gradient(135deg, #10B981, #3B82F6);
+            --gradient-3: linear-gradient(135deg, #F59E0B, #EF4444);
+            --shadow: 0 4px 20px rgba(0,0,0,0.3);
+            --shadow-primary: 0 4px 20px rgba(124, 58, 237, 0.3);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 3px; }
+
+        /* ===== LOGIN ===== */
+        .login-screen {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-bg { position: absolute; width: 100%; height: 100%; }
+
+        .login-bg .circle {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.1;
+            animation: floatAnim 6s ease-in-out infinite;
+        }
+
+        .login-bg .circle:nth-child(1) { width: 300px; height: 300px; background: var(--primary); top: -100px; left: -100px; }
+        .login-bg .circle:nth-child(2) { width: 200px; height: 200px; background: #3B82F6; bottom: -50px; right: -50px; animation-delay: 2s; }
+        .login-bg .circle:nth-child(3) { width: 150px; height: 150px; background: var(--secondary); top: 50%; right: 20%; animation-delay: 4s; }
+
+        @keyframes floatAnim { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-30px) scale(1.1); } }
+        @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .5; transform: scale(1.3); } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .login-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 40px 28px;
+            width: 92%;
+            max-width: 400px;
+            position: relative;
+            z-index: 1;
+            box-shadow: var(--shadow);
+        }
+
+        .login-logo { text-align: center; margin-bottom: 28px; }
+
+        .login-logo .icon {
+            width: 72px; height: 72px;
+            background: var(--gradient-1);
+            border-radius: 20px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 36px;
+            margin: 0 auto 16px;
+            box-shadow: var(--shadow-primary);
+        }
+
+        .login-logo h1 {
+            font-size: 28px; font-weight: 800;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .login-logo p { color: var(--text-secondary); margin-top: 8px; font-size: 14px; }
+
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+
+        .form-input {
+            width: 100%; padding: 13px 16px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            transition: all .3s;
+            outline: none;
+        }
+
+        .form-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(124,58,237,.2); }
+        .form-input::placeholder { color: var(--text-muted); }
+
+        select.form-input {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B6B8D' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+        }
+
+        .btn {
+            width: 100%; padding: 14px;
+            border: none; border-radius: 12px;
+            font-family: 'Inter', sans-serif;
+            font-size: 15px; font-weight: 600;
+            cursor: pointer; transition: all .3s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+
+        .btn-primary { background: var(--gradient-1); color: white; box-shadow: var(--shadow-primary); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 30px rgba(124,58,237,.4); }
+        .btn-secondary { background: var(--bg-input); color: var(--text-secondary); border: 1px solid var(--border); }
+        .btn-secondary:hover { background: var(--bg-card-hover); color: var(--text-primary); }
+        .btn-small { width: auto; padding: 8px 16px; font-size: 13px; border-radius: 8px; }
+        .btn-danger { background: rgba(239,68,68,.15); color: var(--danger); border: 1px solid rgba(239,68,68,.3); }
+
+        .login-divider { display: flex; align-items: center; margin: 20px 0; color: var(--text-muted); font-size: 13px; }
+        .login-divider::before, .login-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+        .login-divider span { padding: 0 12px; }
+
+        .login-tabs { display: flex; background: var(--bg-input); border-radius: 12px; padding: 4px; margin-bottom: 24px; }
+
+        .login-tab {
+            flex: 1; padding: 10px; text-align: center;
+            border-radius: 10px; font-size: 14px; font-weight: 600;
+            cursor: pointer; color: var(--text-muted); transition: all .3s;
+            background: none; border: none; font-family: 'Inter', sans-serif;
+        }
+
+        .login-tab.active { background: var(--gradient-1); color: white; }
+        .register-fields { display: none; }
+        .register-fields.show { display: block; }
+
+        /* ===== APP LAYOUT ===== */
+        .app-container { display: none; flex-direction: column; height: 100vh; }
+        .app-container.active { display: flex; }
+
+        .app-header {
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 16px;
+            display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 100;
+        }
+
+        .header-left { display: flex; align-items: center; gap: 10px; }
+
+        .header-logo {
+            width: 36px; height: 36px;
+            background: var(--gradient-1);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+        }
+
+        .header-title { font-size: 17px; font-weight: 700; }
+        .header-right { display: flex; align-items: center; gap: 10px; }
+
+        .header-btn {
+            width: 40px; height: 40px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: var(--text-secondary);
+            transition: all .3s; position: relative; font-size: 16px;
+        }
+
+        .header-btn:hover { background: var(--bg-card-hover); color: var(--primary-light); }
+
+        .notif-badge {
+            position: absolute; top: -4px; right: -4px;
+            width: 18px; height: 18px;
+            background: var(--danger);
+            border-radius: 50%;
+            font-size: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; color: white;
+        }
+
+        .online-indicator { width: 8px; height: 8px; background: var(--secondary); border-radius: 50%; animation: pulse 2s infinite; }
+        .online-count { font-size: 13px; color: var(--secondary); font-weight: 600; display: flex; align-items: center; gap: 6px; }
+
+        .main-content { flex: 1; overflow-y: auto; padding: 16px; padding-bottom: 80px; }
+
+        .section { display: none; }
+        .section.active { display: block; animation: slideUp .3s ease-out; }
+
+        /* ===== STORIES ===== */
+        .stories-bar { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 14px; margin-bottom: 14px; scrollbar-width: none; }
+        .stories-bar::-webkit-scrollbar { display: none; }
+
+        .story-item { flex-shrink: 0; text-align: center; cursor: pointer; }
+
+        .story-avatar {
+            width: 62px; height: 62px;
+            border-radius: 50%;
+            padding: 3px;
+            background: var(--gradient-1);
+            margin-bottom: 4px;
+        }
+
+        .story-avatar .av {
+            width: 100%; height: 100%;
+            border-radius: 50%;
+            border: 3px solid var(--bg-dark);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; background: var(--bg-card);
+        }
+
+        .story-add-ring { background: var(--bg-card) !important; border: 2px dashed var(--border) !important; padding: 0 !important; }
+        .story-name { font-size: 11px; color: var(--text-secondary); max-width: 62px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* ===== CREATE POST ===== */
+        .create-post {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .create-post-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+
+        .user-avatar {
+            width: 44px; height: 44px; border-radius: 50%;
+            background: var(--gradient-1);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; flex-shrink: 0;
+        }
+
+        .user-avatar.sm { width: 34px; height: 34px; font-size: 15px; }
+
+        .create-post-input {
+            flex: 1; padding: 12px 16px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            font-size: 14px; outline: none;
+            resize: none; height: 44px; transition: all .3s;
+        }
+
+        .create-post-input:focus { height: 80px; border-color: var(--primary); border-radius: 12px; }
+
+        .create-post-actions { display: flex; justify-content: space-between; align-items: center; }
+        .post-attachments { display: flex; gap: 2px; }
+
+        .attach-btn {
+            width: 36px; height: 36px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 10px; cursor: pointer;
+            font-size: 16px; background: none; border: none;
+            color: var(--text-muted); transition: all .3s;
+        }
+
+        .attach-btn:hover { background: var(--bg-input); color: var(--primary-light); }
+
+        /* ===== POST CARD ===== */
+        .post-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+            animation: slideUp .4s ease-out;
+        }
+
+        .post-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .post-user-info { flex: 1; }
+        .post-username { font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 6px; }
+        .verified { color: var(--primary-light); font-size: 13px; }
+        .post-meta { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
+
+        .post-options { color: var(--text-muted); cursor: pointer; font-size: 18px; background: none; border: none; padding: 4px; }
+        .post-content { font-size: 14px; line-height: 1.6; margin-bottom: 12px; }
+        .post-content .tag { color: var(--primary-light); font-weight: 500; }
+
+        .fare-card {
+            background: linear-gradient(135deg, rgba(124,58,237,.12), rgba(59,130,246,.12));
+            border: 1px solid rgba(124,58,237,.3);
+            border-radius: 12px; padding: 16px; margin-bottom: 12px;
+        }
+
+        .fare-route { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 14px; }
+        .dot-green { width: 10px; height: 10px; border-radius: 50%; background: var(--secondary); }
+        .dot-red { width: 10px; height: 10px; border-radius: 50%; background: var(--danger); }
+        .route-line { flex: 1; height: 2px; background: var(--border); }
+
+        .fare-amount { text-align: center; font-size: 32px; font-weight: 800; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 10px; }
+
+        .fare-votes { display: flex; align-items: center; justify-content: center; gap: 12px; }
+
+        .vote-btn {
+            display: flex; align-items: center; gap: 6px;
+            padding: 8px 16px; border-radius: 20px;
+            border: 1px solid var(--border);
+            background: var(--bg-input);
+            color: var(--text-secondary);
+            cursor: pointer; font-family: 'Inter', sans-serif;
+            font-size: 13px; font-weight: 600; transition: all .3s;
+        }
+
+        .vote-btn:hover { transform: scale(1.05); }
+        .vote-btn.voted-up { background: rgba(16,185,129,.2); border-color: var(--secondary); color: var(--secondary); }
+        .vote-btn.voted-down { background: rgba(239,68,68,.2); border-color: var(--danger); color: var(--danger); }
+
+        .post-stats { display: flex; gap: 16px; padding: 8px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); margin-bottom: 8px; font-size: 13px; color: var(--text-muted); }
+        .post-actions-bar { display: flex; justify-content: space-around; }
+
+        .action-btn {
+            display: flex; align-items: center; gap: 6px;
+            padding: 8px 12px; border-radius: 8px;
+            cursor: pointer; color: var(--text-muted);
+            font-size: 13px; font-weight: 500; transition: all .3s;
+            background: none; border: none; font-family: 'Inter', sans-serif;
+        }
+
+        .action-btn:hover { background: var(--bg-input); color: var(--primary-light); }
+        .action-btn.liked { color: var(--danger); }
+
+        /* ===== TARIFAS ===== */
+        .sec-header { text-align: center; margin-bottom: 24px; }
+        .sec-header h2 { font-size: 22px; font-weight: 800; margin-bottom: 8px; }
+        .sec-header p { color: var(--text-secondary); font-size: 14px; }
+
+        .stats-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 20px; }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px; padding: 14px 10px; text-align: center;
+        }
+
+        .stat-val { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+        .stat-val.green { color: var(--secondary); }
+        .stat-val.purple { color: var(--primary-light); }
+        .stat-val.amber { color: var(--accent); }
+        .stat-label { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+
+        .tarifa-form {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px; padding: 20px; margin-bottom: 20px;
+        }
+
+        .tarifa-form h3 { font-size: 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+        .range-container { padding: 8px 0; }
+
+        .range-slider {
+            width: 100%; height: 6px;
+            -webkit-appearance: none; appearance: none;
+            background: var(--bg-input); border-radius: 3px; outline: none;
+        }
+
+        .range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 24px; height: 24px; border-radius: 50%;
+            background: var(--gradient-1); cursor: pointer;
+            box-shadow: var(--shadow-primary);
+        }
+
+        .range-value {
+            text-align: center; font-size: 28px; font-weight: 800;
+            background: var(--gradient-1);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            margin: 8px 0;
+        }
+
+        .tarifa-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px; padding: 18px; margin-bottom: 12px;
+            position: relative; overflow: hidden;
+        }
+
+        .tarifa-item::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--gradient-1); }
+        .tarifa-item-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px; }
+        .tarifa-item h4 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+        .tarifa-item .sub { font-size: 12px; color: var(--text-muted); }
+
+        .price-badge { background: var(--gradient-1); padding: 8px 16px; border-radius: 20px; font-size: 18px; font-weight: 800; }
+
+        .progress-bar { width: 100%; height: 6px; background: var(--bg-input); border-radius: 3px; overflow: hidden; margin: 8px 0 4px; }
+        .progress-fill { height: 100%; background: var(--gradient-1); border-radius: 3px; transition: width .5s; }
+        .progress-labels { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); margin-bottom: 10px; }
+
+        .tarifa-footer { display: flex; justify-content: space-between; align-items: center; }
+
+        .mini-avatars { display: flex; }
+        .mini-av { width: 28px; height: 28px; border-radius: 50%; background: var(--gradient-1); display: flex; align-items: center; justify-content: center; font-size: 11px; margin-left: -8px; border: 2px solid var(--bg-card); }
+        .mini-av:first-child { margin-left: 0; }
+
+        .ranking-list { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+        .ranking-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+        .ranking-item:last-child { border-bottom: none; }
+        .rank-pos { font-size: 16px; font-weight: 800; width: 28px; text-align: center; }
+        .ranking-info { flex: 1; }
+        .ranking-name { font-weight: 600; font-size: 14px; }
+        .ranking-detail { font-size: 12px; color: var(--text-muted); }
+        .ranking-val { font-weight: 700; font-size: 15px; color: var(--primary-light); }
+
+        /* ===== MAPA ===== */
+        .map-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            height: 220px;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 16px; position: relative; overflow: hidden;
+        }
+
+        .map-grid {
+            position: absolute; width: 100%; height: 100%; opacity: .08;
+            background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+
+        .map-dot {
+            position: absolute; width: 12px; height: 12px; border-radius: 50%;
+            background: var(--primary);
+            box-shadow: 0 0 10px rgba(124,58,237,.5);
+            animation: pulse 2s infinite;
+        }
+
+        .map-center { z-index: 1; text-align: center; color: var(--text-muted); }
+        .map-center .ic { font-size: 48px; margin-bottom: 8px; }
+
+        .zones-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+
+        .zone-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px; padding: 16px; cursor: pointer; transition: all .3s;
+        }
+
+        .zone-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+        .zone-card .ze { font-size: 24px; margin-bottom: 8px; }
+        .zone-card .zn { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+        .zone-card .zd { font-size: 12px; color: var(--text-muted); }
+        .zone-card .zs { font-size: 13px; color: var(--accent); font-weight: 600; margin-top: 4px; }
+
+        /* ===== CHAT ===== */
+        .chat-room {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px; padding: 14px;
+            margin-bottom: 8px;
+            display: flex; align-items: center; gap: 12px;
+            cursor: pointer; transition: all .3s;
+        }
+
+        .chat-room:hover { background: var(--bg-card-hover); border-color: var(--primary); }
+
+        .chat-icon {
+            width: 48px; height: 48px; border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px; flex-shrink: 0;
+        }
+
+        .chat-info { flex: 1; min-width: 0; }
+        .chat-name { font-weight: 600; font-size: 15px; margin-bottom: 2px; }
+        .chat-last { font-size: 13px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .chat-meta { text-align: right; flex-shrink: 0; }
+        .chat-time { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+
+        .chat-unread {
+            width: 22px; height: 22px;
+            background: var(--primary); border-radius: 50%;
+            font-size: 11px; font-weight: 700;
+            display: flex; align-items: center; justify-content: center;
+            margin-left: auto;
+        }
+
+        .chat-view { display: none; flex-direction: column; height: calc(100vh - 130px); }
+        .chat-view.active { display: flex; }
+
+        .chat-view-header { display: flex; align-items: center; gap: 12px; padding-bottom: 14px; border-bottom: 1px solid var(--border); margin-bottom: 12px; }
+
+        .chat-back {
+            background: none; border: none; color: var(--text-secondary);
+            font-size: 20px; cursor: pointer; padding: 4px;
+        }
+
+        .chat-messages { flex: 1; overflow-y: auto; padding-right: 4px; }
+
+        .msg { display: flex; gap: 8px; margin-bottom: 14px; animation: slideUp .3s ease-out; }
+        .msg.sent { flex-direction: row-reverse; }
+
+        .msg-bubble { max-width: 78%; padding: 11px 15px; border-radius: 16px; font-size: 14px; line-height: 1.5; }
+        .msg.received .msg-bubble { background: var(--bg-card); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+        .msg.sent .msg-bubble { background: var(--gradient-1); border-bottom-right-radius: 4px; }
+        .msg-time { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+        .msg.sent .msg-time { text-align: right; }
+
+        .chat-input-area { display: flex; align-items: center; gap: 8px; padding-top: 12px; border-top: 1px solid var(--border); }
+
+        .chat-input {
+            flex: 1; padding: 12px 16px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            font-size: 14px; outline: none;
+        }
+
+        .chat-input:focus { border-color: var(--primary); }
+
+        .chat-send {
+            width: 44px; height: 44px;
+            background: var(--gradient-1);
+            border: none; border-radius: 50%;
+            color: white; font-size: 18px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: all .3s;
+        }
+
+        .chat-send:hover { transform: scale(1.1); }
+
+        /* ===== PERFIL ===== */
+        .profile-cover { height: 110px; background: var(--gradient-1); border-radius: 16px; margin-bottom: -40px; }
+
+        .profile-avatar-lg {
+            width: 80px; height: 80px;
+            border-radius: 50%; background: var(--bg-card);
+            border: 4px solid var(--bg-dark);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 36px; margin: 0 auto; position: relative; z-index: 1;
+        }
+
+        .profile-name { text-align: center; font-size: 22px; font-weight: 700; margin-top: 12px; }
+        .profile-handle { text-align: center; color: var(--text-muted); font-size: 14px; margin-bottom: 8px; }
+        .profile-bio { text-align: center; color: var(--text-secondary); font-size: 14px; line-height: 1.5; max-width: 320px; margin: 0 auto 16px; }
+
+        .profile-stats { display: flex; justify-content: center; gap: 32px; margin-bottom: 16px; }
+        .profile-stat { text-align: center; }
+        .profile-stat .val { font-size: 20px; font-weight: 700; }
+        .profile-stat .lbl { font-size: 12px; color: var(--text-muted); }
+
+        .badges { display: flex; justify-content: center; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+
+        .badge {
+            padding: 6px 12px; border-radius: 20px;
+            font-size: 12px; font-weight: 600;
+            display: flex; align-items: center; gap: 4px;
+        }
+
+        .badge.gold { background: rgba(245,158,11,.2); color: var(--accent); border: 1px solid rgba(245,158,11,.3); }
+        .badge.purple { background: rgba(124,58,237,.2); color: var(--primary-light); border: 1px solid rgba(124,58,237,.3); }
+        .badge.green { background: rgba(16,185,129,.2); color: var(--secondary); border: 1px solid rgba(16,185,129,.3); }
+
+        .profile-menu { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+
+        .profile-menu-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 16px; cursor: pointer; transition: all .3s;
+            border-bottom: 1px solid var(--border); font-size: 14px;
+        }
+
+        .profile-menu-item:last-child { border-bottom: none; }
+        .profile-menu-item:hover { background: var(--bg-card-hover); }
+        .menu-ic { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+        .menu-text { flex: 1; }
+        .menu-arrow { color: var(--text-muted); }
+
+        /* ===== BOTTOM NAV ===== */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border);
+            display: flex; justify-content: space-around;
+            padding: 8px 0;
+            padding-bottom: max(8px, env(safe-area-inset-bottom));
+            z-index: 100;
+        }
+
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center; gap: 2px;
+            padding: 6px 12px; cursor: pointer; color: var(--text-muted);
+            transition: all .3s; background: none; border: none;
+            font-family: 'Inter', sans-serif; position: relative;
+        }
+
+        .nav-icon { font-size: 22px; transition: all .3s; }
+        .nav-label { font-size: 10px; font-weight: 600; }
+
+        .nav-item.active { color: var(--primary-light); }
+        .nav-item.active::before {
+            content: ''; position: absolute; top: -8px;
+            width: 24px; height: 3px;
+            background: var(--gradient-1); border-radius: 2px;
+        }
+
+        /* ===== TOAST ===== */
+        .toast {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px);
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 12px; padding: 12px 20px;
+            display: flex; align-items: center; gap: 8px;
+            box-shadow: var(--shadow); z-index: 300;
+            transition: transform .4s cubic-bezier(.68,-.55,.27,1.55);
+            font-size: 14px; white-space: nowrap;
+        }
+
+        .toast.show { transform: translateX(-50%) translateY(0); }
+        .toast.success { border-color: var(--secondary); }
+        .toast.info { border-color: var(--primary); }
+
+        /* ===== COMMENTS AREA ===== */
+        .comments-area { padding: 12px 0; }
+        .comment { display: flex; gap: 8px; margin-bottom: 10px; }
+        .comment-body { background: var(--bg-input); padding: 8px 12px; border-radius: 12px; font-size: 13px; flex: 1; }
+        .comment-author { font-weight: 600; font-size: 12px; margin-bottom: 2px; }
+        .comment-text { color: var(--text-secondary); line-height: 1.4; }
+        .comment-input-row { display: flex; gap: 8px; margin-top: 8px; }
+
+        .comment-input {
+            flex: 1; padding: 10px 14px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            font-size: 13px; outline: none;
+        }
+
+        .comment-input:focus { border-color: var(--primary); }
+
+        .comment-send {
+            padding: 10px 16px; background: var(--gradient-1);
+            border: none; border-radius: 20px; color: white;
+            font-size: 13px; font-weight: 600; cursor: pointer;
+            font-family: 'Inter', sans-serif;
+        }
+
+        @media (min-width: 768px) {
+            .main-content { max-width: 600px; margin: 0 auto; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== LOGIN ===== -->
+<div class="login-screen" id="loginScreen">
+    <div class="login-bg">
+        <div class="circle"></div>
+        <div class="circle"></div>
+        <div class="circle"></div>
+    </div>
+    <div class="login-container">
+        <div class="login-logo">
+            <div class="icon">🚗</div>
+            <h1>RidersConnect</h1>
+            <p>La red de conductores que decide sus tarifas</p>
+        </div>
+
+        <div class="login-tabs">
+            <button class="login-tab active" onclick="switchLoginTab('login')">Iniciar Sesión</button>
+            <button class="login-tab" onclick="switchLoginTab('register')">Registro</button>
+        </div>
+
+        <form onsubmit="handleAuth(event)">
+            <div class="register-fields" id="registerFields">
+                <div class="form-group">
+                    <label>Nombre completo</label>
+                    <input type="text" class="form-input" id="regName" placeholder="Tu nombre completo">
+                </div>
+                <div class="form-group">
+                    <label>Ciudad</label>
+                    <select class="form-input" id="regCity">
+                        <option value="">Selecciona tu ciudad</option>
+                        <option value="CDMX">Ciudad de México</option>
+                        <option value="Bogotá">Bogotá</option>
+                        <option value="Lima">Lima</option>
+                        <option value="Buenos Aires">Buenos Aires</option>
+                        <option value="Santiago">Santiago</option>
+                        <option value="Medellín">Medellín</option>
+                        <option value="Guadalajara">Guadalajara</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Tipo de vehículo</label>
+                    <select class="form-input" id="regVehicle">
+                        <option value="">Selecciona tu vehículo</option>
+                        <option value="Sedán">Sedán</option>
+                        <option value="SUV">SUV</option>
+                        <option value="Compacto">Compacto</option>
+                        <option value="Camioneta">Camioneta</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Correo electrónico</label>
+                <input type="email" class="form-input" id="authEmail" placeholder="tu@correo.com" required>
+            </div>
+            <div class="form-group">
+                <label>Contraseña</label>
+                <input type="password" class="form-input" id="authPassword" placeholder="••••••••" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary" id="authBtn">🔐 Iniciar Sesión</button>
+        </form>
+
+        <div class="login-divider"><span>acceso rápido</span></div>
+        <button class="btn btn-secondary" onclick="quickDemo()">⚡ Entrar como conductor demo</button>
+    </div>
+</div>
+
+<!-- ===== APP ===== -->
+<div class="app-container" id="appContainer">
+    <header class="app-header">
+        <div class="header-left">
+            <div class="header-logo">🚗</div>
+            <span class="header-title">RidersConnect</span>
+        </div>
+        <div class="header-right">
+            <div class="online-count">
+                <div class="online-indicator"></div>
+                <span id="onlineCount">847</span>
+            </div>
+            <button class="header-btn" onclick="showToast('🔔 Sin notificaciones nuevas','info')">
+                🔔<div class="notif-badge">3</div>
+            </button>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <!-- ===== FEED ===== -->
+        <section class="section active" id="secFeed">
+            <div class="stories-bar">
+                <div class="story-item" onclick="showToast('📸 Función próximamente','info')">
+                    <div class="story-avatar story-add-ring"><div class="av">➕</div></div>
+                    <div class="story-name">Tu historia</div>
+                </div>
+                <div class="story-item"><div class="story-avatar"><div class="av">👨‍✈️</div></div><div class="story-name">Carlos M.</div></div>
+                <div class="story-item"><div class="story-avatar"><div class="av">👩‍💼</div></div><div class="story-name">Ana R.</div></div>
+                <div class="story-item"><div class="story-avatar"><div class="av">🧑‍💻</div></div><div class="story-name">Miguel S.</div></div>
+                <div class="story-item"><div class="story-avatar"><div class="av">👨‍🔧</div></div><div class="story-name">Pedro L.</div></div>
+                <div class="story-item"><div class="story-avatar"><div class="av">👩‍🎤</div></div><div class="story-name">Laura G.</div></div>
+            </div>
+
+            <div class="create-post">
+                <div class="create-post-top">
+                    <div class="user-avatar" id="feedAvatar">😎</div>
+                    <textarea class="create-post-input" id="newPostInput" placeholder="¿Qué pasa en las calles hoy?"></textarea>
+                </div>
+                <div class="create-post-actions">
+                    <div class="post-attachments">
+                        <button class="attach-btn" onclick="showToast('📷 Foto próximamente','info')">📷</button>
+                        <button class="attach-btn" onclick="showToast('📍 Ubicación próximamente','info')">📍</button>
+                        <button class="attach-btn" onclick="switchSection('tarifas')">💰</button>
+                        <button class="attach-btn" onclick="showToast('📊 Encuesta próximamente','info')">📊</button>
+                    </div>
+                    <button class="btn btn-primary btn-small" onclick="createPost()">Publicar</button>
+                </div>
+            </div>
+
+            <div id="postsFeed"></div>
+        </section>
+
+        <!-- ===== TARIFAS ===== -->
+        <section class="section" id="secTarifas">
+            <div class="sec-header">
+                <h2>💰 Tarifas Justas</h2>
+                <p>Vota y propone el precio óptimo para cada ruta</p>
+            </div>
+
+            <div class="stats-row">
+                <div class="stat-card"><div class="stat-val green">1,247</div><div class="stat-label">Votos hoy</div></div>
+                <div class="stat-card"><div class="stat-val purple">56</div><div class="stat-label">Rutas activas</div></div>
+                <div class="stat-card"><div class="stat-val amber">78%</div><div class="stat-label">Consenso</div></div>
+            </div>
+
+            <div class="tarifa-form">
+                <h3>🆕 Proponer nueva tarifa</h3>
+                <div class="form-row">
+                    <div class="form-group"><label>Origen</label><input type="text" class="form-input" id="tarifaOrigen" placeholder="Ej: Centro"></div>
+                    <div class="form-group"><label>Destino</label><input type="text" class="form-input" id="tarifaDestino" placeholder="Ej: Aeropuerto"></div>
+                </div>
+                <div class="form-group">
+                    <label>Precio sugerido (USD)</label>
+                    <div class="range-container">
+                        <input type="range" class="range-slider" id="tarifaSlider" min="1" max="100" value="25" oninput="updateSlider()">
+                        <div class="range-value" id="sliderVal">\$25.00</div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Justificación</label>
+                    <input type="text" class="form-input" id="tarifaJustif" placeholder="¿Por qué este precio es justo?">
+                </div>
+                <button class="btn btn-primary" onclick="createTarifa()">📊 Proponer tarifa</button>
+            </div>
+
+            <h3 style="margin-bottom:12px;font-size:16px">📋 Tarifas más votadas</h3>
+            <div id="tarifasList"></div>
+
+            <h3 style="margin:20px 0 12px;font-size:16px">🏆 Top contribuidores</h3>
+            <div class="ranking-list">
+                <div class="ranking-item"><div class="rank-pos">🥇</div><div class="user-avatar sm">👨‍✈️</div><div class="ranking-info"><div class="ranking-name">Carlos Mendoza</div><div class="ranking-detail">142 votos • Bogotá</div></div><div class="ranking-val">⭐ 4.9</div></div>
+                <div class="ranking-item"><div class="rank-pos">🥈</div><div class="user-avatar sm">👩‍💼</div><div class="ranking-info"><div class="ranking-name">Ana Rodríguez</div><div class="ranking-detail">128 votos • CDMX</div></div><div class="ranking-val">⭐ 4.8</div></div>
+                <div class="ranking-item"><div class="rank-pos">🥉</div><div class="user-avatar sm">🧑‍💻</div><div class="ranking-info"><div class="ranking-name">Miguel Santos</div><div class="ranking-detail">115 votos • Lima</div></div><div class="ranking-val">⭐ 4.7</div></div>
+            </div>
+        </section>
+
+        <!-- ===== MAPA ===== -->
+        <section class="section" id="secMapa">
+            <div class="sec-header">
+                <h2>🗺️ Zonas Calientes</h2>
+                <p>Dónde hay más demanda en tiempo real</p>
+            </div>
+
+            <div class="map-box">
+                <div class="map-grid"></div>
+                <div class="map-dot" style="top:20%;left:30%"></div>
+                <div class="map-dot" style="top:40%;left:65%;animation-delay:.5s"></div>
+                <div class="map-dot" style="top:65%;left:25%;animation-delay:1s"></div>
+                <div class="map-dot" style="top:30%;left:80%;animation-delay:1.5s"></div>
+                <div class="map-dot" style="top:70%;left:55%;animation-delay:.8s;background:var(--secondary);box-shadow:0 0 10px rgba(16,185,129,.5)"></div>
+                <div class="map-center"><div class="ic">🗺️</div><p>Mapa de conductores activos</p></div>
+            </div>
+
+            <h3 style="margin-bottom:12px;font-size:16px">🔥 Zonas con mayor demanda</h3>
+            <div class="zones-grid">
+                <div class="zone-card" onclick="showToast('📍 Navegando a Centro','success')"><div class="ze">🏛️</div><div class="zn">Centro Histórico</div><div class="zd">23 conductores</div><div class="zs">⚡ Surge x1.8</div></div>
+                <div class="zone-card" onclick="showToast('📍 Navegando a Aeropuerto','success')"><div class="ze">✈️</div><div class="zn">Aeropuerto</div><div class="zd">45 conductores</div><div class="zs">⚡ Surge x2.1</div></div>
+                <div class="zone-card" onclick="showToast('📍 Navegando a Zona Rosa','success')"><div class="ze">🌃</div><div class="zn">Zona Rosa</div><div class="zd">18 conductores</div><div class="zs">⚡ Surge x1.5</div></div>
+                <div class="zone-card" onclick="showToast('📍 Navegando a Universidades','success')"><div class="ze">🎓</div><div class="zn">Universidades</div><div class="zd">31 conductores</div><div class="zs">⚡ Surge x1.3</div></div>
+                <div class="zone-card" onclick="showToast('📍 Navegando a Estadio','success')"><div class="ze">🏟️</div><div class="zn">Estadio</div><div class="zd">12 conductores</div><div class="zs">⚡ Surge x1.6</div></div>
+                <div class="zone-card" onclick="showToast('📍 Navegando a Hospital','success')"><div class="ze">🏥</div><div class="zn">Hospital Central</div><div class="zd">8 conductores</div><div class="zs">⚡ Surge x1.2</div></div>
+            </div>
+        </section>
+
+        <!-- ===== CHAT ===== -->
+        <section class="section" id="secChat">
+            <div class="sec-header">
+                <h2>💬 Chat Conductores</h2>
+                <p>Comunícate con otros conductores</p>
+            </div>
+
+            <div id="chatRoomsList">
+                <div class="chat-room" onclick="openChat('general')">
+                    <div class="chat-icon" style="background:rgba(124,58,237,.2)">💬</div>
+                    <div class="chat-info"><div class="chat-name">Chat General</div><div class="chat-last">Carlos: Mucho tráfico en el centro...</div></div>
+                    <div class="chat-meta"><div class="chat-time">2 min</div><div class="chat-unread">5</div></div>
+                </div>
+                <div class="chat-room" onclick="openChat('tarifas')">
+                    <div class="chat-icon" style="background:rgba(16,185,129,.2)">💰</div>
+                    <div class="chat-info"><div class="chat-name">Tarifas y Precios</div><div class="chat-last">Ana: ¿Cuánto cobran al aeropuerto?</div></div>
+                    <div class="chat-meta"><div class="chat-time">5 min</div><div class="chat-unread">3</div></div>
+                </div>
+                <div class="chat-room" onclick="openChat('zona')">
+                    <div class="chat-icon" style="background:rgba(245,158,11,.2)">📍</div>
+                    <div class="chat-info"><div class="chat-name">Zona Norte</div><div class="chat-last">Miguel: Hay retén en la autopista</div></div>
+                    <div class="chat-meta"><div class="chat-time">12 min</div></div>
+                </div>
+                <div class="chat-room" onclick="openChat('tips')">
+                    <div class="chat-icon" style="background:rgba(239,68,68,.2)">💡</div>
+                    <div class="chat-info"><div class="chat-name">Tips y Consejos</div><div class="chat-last">Pedro: Nuevo truco para ahorrar gas...</div></div>
+                    <div class="chat-meta"><div class="chat-time">30 min</div></div>
+                </div>
+                <div class="chat-room" onclick="openChat('emergencias')">
+                    <div class="chat-icon" style="background:rgba(239,68,68,.3)">🚨</div>
+                    <div class="chat-info"><div class="chat-name">Emergencias</div><div class="chat-last">Laura: Cuidado calle 5, accidente</div></div>
+                    <div class="chat-meta"><div class="chat-time">1h</div></div>
+                </div>
+            </div>
+
+            <div class="chat-view" id="chatView">
+                <div class="chat-view-header">
+                    <button class="chat-back" onclick="closeChat()">⬅️</button>
+                    <div class="chat-icon" style="background:rgba(124,58,237,.2);width:40px;height:40px;font-size:18px" id="chatViewIcon">💬</div>
+                    <div><div class="chat-name" id="chatViewName">Chat General</div><div style="font-size:12px;color:var(--text-muted)">847 miembros en línea</div></div>
+                </div>
+                <div class="chat-messages" id="chatMessages"></div>
+                <div class="chat-input-area">
+                    <input type="text" class="chat-input" id="chatInput" placeholder="Escribe un mensaje..." onkeydown="if(event.key==='Enter')sendMessage()">
+                    <button class="chat-send" onclick="sendMessage()">➤</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== PERFIL ===== -->
+        <section class="section" id="secPerfil">
+            <div class="profile-cover"></div>
+            <div class="profile-avatar-lg" id="profileAvatar">😎</div>
+            <div class="profile-name" id="profileName">Conductor Demo</div>
+            <div class="profile-handle" id="profileHandle">@conductor_demo</div>
+            <div class="profile-bio">🚗 Conductor profesional | 🌟 Luchando por tarifas justas | 📍 Conectando conductores</div>
+
+            <div class="profile-stats">
+                <div class="profile-stat"><div class="val">234</div><div class="lbl">Viajes</div></div>
+                <div class="profile-stat"><div class="val">89</div><div class="lbl">Votos</div></div>
+                <div class="profile-stat"><div class="val">4.9</div><div class="lbl">Rating</div></div>
+            </div>
+
+            <div class="badges">
+                <span class="badge gold">🏆 Top Conductor</span>
+                <span class="badge purple">💎 Verificado</span>
+                <span class="badge green">🌱 Eco-Driver</span>
+            </div>
+
+            <div class="profile-menu">
+                <div class="profile-menu-item" onclick="showToast('⚙️ Configuración próximamente','info')">
+                    <div class="menu-ic" style="background:rgba(124,58,237,.15)">⚙️</div>
+                    <div class="menu-text">Configuración</div>
+                    <div class="menu-arrow">›</div>
+                </div>
+                <div class="profile-menu-item" onclick="showToast('📊 Estadísticas próximamente','info')">
+                    <div class="menu-ic" style="background:rgba(16,185,129,.15)">📊</div>
+                    <div class="menu-text">Mis estadísticas</div>
+                    <div class="menu-arrow">›</div>
+                </div>
+                <div class="profile-menu-item" onclick="showToast('💰 Ganancias próximamente','info')">
+                    <div class="menu-ic" style="background:rgba(245,158,11,.15)">💰</div>
+                    <div class="menu-text">Mis ganancias</div>
+                    <div class="menu-arrow">›</div>
+                </div>
+                <div class="profile-menu-item" onclick="showToast('🏆 Logros próximamente','info')">
+                    <div class="menu-ic" style="background:rgba(59,130,246,.15)">🏆</div>
+                    <div class="menu-text">Logros y badges</div>
+                    <div class="menu-arrow">›</div>
+                </div>
+                <div class="profile-menu-item" onclick="showToast('❓ Ayuda próximamente','info')">
+                    <div class="menu-ic" style="background:rgba(107,107,141,.15)">❓</div>
+                    <div class="menu-text">Ayuda y soporte</div>
+                    <div class="menu-arrow">›</div>
+                </div>
+                <div class="profile-menu-item" onclick="logout()" style="color:var(--danger)">
+                    <div class="menu-ic" style="background:rgba(239,68,68,.15)">🚪</div>
+                    <div class="menu-text">Cerrar sesión</div>
+                    <div class="menu-arrow">›</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Bottom Nav -->
+    <nav class="bottom-nav">
+        <button class="nav-item active" onclick="switchSection('feed')"><div class="nav-icon">🏠</div><div class="nav-label">Inicio</div></button>
+        <button class="nav-item" onclick="switchSection('tarifas')"><div class="nav-icon">💰</div><div class="nav-label">Tarifas</div></button>
+        <button class="nav-item" onclick="switchSection('mapa')"><div class="nav-icon">🗺️</div><div class="nav-label">Zonas</div></button>
+        <button class="nav-item" onclick="switchSection('chat')"><div class="nav-icon">💬</div><div class="nav-label">Chat</div></button>
+        <button class="nav-item" onclick="switchSection('perfil')"><div class="nav-icon">👤</div><div class="nav-label">Perfil</div></button>
+    </nav>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== DATA =====
+let currentUser = null;
+let isRegistering = false;
+
+const emojis = ['😎','👨‍✈️','👩‍💼','🧑‍💻','👨‍🔧','👩‍🎤','🧔','👩‍🦰','👨‍💻','👩‍🔬'];
+const names = ['Carlos Mendoza','Ana Rodríguez','Miguel Santos','Pedro López','Laura García','Diego Ruiz','Sofía Torres','Andrés Mejía','Valentina Cruz','Roberto Díaz'];
+const cities = ['Bogotá','CDMX','Lima','Buenos Aires','Santiago','
