@@ -1057,12 +1057,12 @@ function listenPosts() {
                     '<div class="post-content">' + p.content.replace(/\n/g, '<br>') + '</div>' +
                     '<div class="post-stats"><span>' + likeCount + ' likes</span><span>' + (p.comments ? p.comments.length : 0) + ' comentarios</span></div>' +
                     '<div class="post-actions-bar">' +
-                    '<button class="action-btn ' + (liked ? 'liked' : '') + '" onclick="likePost(\'' + p.id + '\')"><span>👍</span> Me gusta</button>' +
-                    '<button class="action-btn" onclick="showComments(\'' + p.id + '\')"><span>💬</span> Comentar</button>' +
+                    '<button class="action-btn ' + (liked ? 'liked' : '') + '" data-postid="' + p.id + '" onclick="likePost(this.dataset.postid)"><span>👍</span> Me gusta</button>' +
+                    '<button class="action-btn" data-postid="' + p.id + '" onclick="showComments(this.dataset.postid)"><span>💬</span> Comentar</button>' +
                     '</div>' +
-                    '<div class="comments-area" id="comments-' + p.id + '" style="display:none">' +
+                    '<div class="comments-area" id="comments-' + p.id.replace(/[^a-zA-Z0-9]/g, '_') + '" style="display:none">' +
                     commentsHTML +
-                    '<div class="comment-input-row"><input type="text" class="comment-input" id="comment-input-' + p.id + '" placeholder="Escribe un comentario..." onkeydown="if(event.key===\'Enter\') addComment(\'' + p.id + '\')"><button class="comment-send" onclick="addComment(\'' + p.id + '\')">➤</button></div>' +
+                    '<div class="comment-input-row"><input type="text" class="comment-input" id="comment-input-' + p.id.replace(/[^a-zA-Z0-9]/g, '_') + '" placeholder="Escribe un comentario..." onkeydown="if(event.key===\'Enter\') addComment(this.dataset.postid)" data-postid="' + p.id + '"><button class="comment-send" data-postid="' + p.id + '" onclick="addComment(this.dataset.postid)">➤</button></div>' +
                     '</div>' +
                     '</div>';
             }).join('');
@@ -1099,12 +1099,12 @@ function likePost(postId) {
 }
 
 function showComments(postId) {
-    var commentsDiv = document.getElementById('comments-' + postId);
+    var commentsDiv = document.getElementById('comments-' + postId.replace(/[^a-zA-Z0-9]/g, '_'));
     commentsDiv.style.display = commentsDiv.style.display === 'none' ? 'block' : 'none';
 }
 
 function addComment(postId) {
-    var input = document.getElementById('comment-input-' + postId);
+    var input = document.getElementById('comment-input-' + postId.replace(/[^a-zA-Z0-9]/g, '_'));
     var text = input.value.trim();
     if (!text) return;
     var comment = {
