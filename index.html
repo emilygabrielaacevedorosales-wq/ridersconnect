@@ -260,41 +260,99 @@
 
         <!-- TARIFAS -->
         <section class="section" id="secTarifas">
-            <div class="sec-header"><h2>💰 Tarifas Justas</h2><p>Vota el precio óptimo para cada ruta</p></div>
+            <div class="sec-header"><h2>💰 Tarifas Justas</h2><p>Registra tus viajes y entre todos definimos la tarifa óptima</p></div>
+            
             <div class="stats-row">
-                <div class="stat-card"><div class="stat-val green" id="statVotos">0</div><div class="stat-label">Votos hoy</div></div>
+                <div class="stat-card"><div class="stat-val green" id="statRegistros">0</div><div class="stat-label">Registros hoy</div></div>
                 <div class="stat-card"><div class="stat-val purple" id="statRutas">0</div><div class="stat-label">Rutas</div></div>
-                <div class="stat-card"><div class="stat-val amber" id="statConsenso">0%</div><div class="stat-label">Consenso</div></div>
+                <div class="stat-card"><div class="stat-val amber" id="statPromedio">\$0</div><div class="stat-label">Promedio/km</div></div>
             </div>
+
+            <!-- FORMULARIO REGISTRO DE VIAJE -->
             <div class="tarifa-form">
-                <h3>🆕 Proponer tarifa</h3>
+                <h3>🚗 Registrar viaje</h3>
                 <div class="form-row">
-                    <div class="form-group"><label>Origen</label><input type="text" class="form-input" id="tarifaOrigen" placeholder="Centro"></div>
-                    <div class="form-group"><label>Destino</label><input type="text" class="form-input" id="tarifaDestino" placeholder="Aeropuerto"></div>
+                    <div class="form-group"><label>Comuna Origen</label>
+                        <select class="form-input" id="comunaA">
+                            <option value="">Selecciona</option>
+                            <option value="Santiago Centro">Santiago Centro</option>
+                            <option value="Providencia">Providencia</option>
+                            <option value="Las Condes">Las Condes</option>
+                            <option value="Ñuñoa">Ñuñoa</option>
+                            <option value="La Florida">La Florida</option>
+                            <option value="Maipú">Maipú</option>
+                            <option value="Puente Alto">Puente Alto</option>
+                            <option value="San Bernardo">San Bernardo</option>
+                            <option value="Viña del Mar">Viña del Mar</option>
+                            <option value="Valparaíso">Valparaíso</option>
+                            <option value="Concón">Concón</option>
+                            <option value="Quilpué">Quilpué</option>
+                            <option value="Villa Alemana">Villa Alemana</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>Comuna Destino</label>
+                        <select class="form-input" id="comunaB">
+                            <option value="">Selecciona</option>
+                            <option value="Santiago Centro">Santiago Centro</option>
+                            <option value="Providencia">Providencia</option>
+                            <option value="Las Condes">Las Condes</option>
+                            <option value="Ñuñoa">Ñuñoa</option>
+                            <option value="La Florida">La Florida</option>
+                            <option value="Maipú">Maipú</option>
+                            <option value="Puente Alto">Puente Alto</option>
+                            <option value="San Bernardo">San Bernardo</option>
+                            <option value="Viña del Mar">Viña del Mar</option>
+                            <option value="Valparaíso">Valparaíso</option>
+                            <option value="Concón">Concón</option>
+                            <option value="Quilpué">Quilpué</option>
+                            <option value="Villa Alemana">Villa Alemana</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="form-group"><label>Precio (USD)</label>
-                    <div class="range-container"><input type="range" class="range-slider" id="tarifaSlider" min="1" max="100" value="25" oninput="updateSlider()"><div class="range-value" id="sliderVal">\$25.00</div></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Kilómetros totales</label><input type="number" class="form-input" id="tarifaKm" placeholder="Ej: 12" min="1" step="0.1"></div>
+                    <div class="form-group"><label>Ganancia total (CLP $)</label><input type="number" class="form-input" id="tarifaGanancia" placeholder="Ej: 5500" min="100" step="100"></div>
                 </div>
-                <div class="form-group"><label>Justificación</label><input type="text" class="form-input" id="tarifaJustif" placeholder="¿Por qué este precio?"></div>
-                <button class="btn btn-primary" onclick="createTarifa()">📊 Proponer</button>
+                <div style="background:var(--bg-input);border-radius:12px;padding:12px;margin:12px 0;text-align:center">
+                    <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Ganancia por kilómetro</div>
+                    <div style="font-size:24px;font-weight:800;color:var(--secondary)" id="gananciaPorKm">\$0 /km</div>
+                    <div style="font-size:11px;color:var(--text-muted);margin-top:4px" id="tipoRuta">-</div>
+                </div>
+                <button class="btn btn-primary" onclick="registrarViaje()">📊 Registrar viaje</button>
             </div>
-            <div id="tarifasList"><div class="loading">Cargando tarifas...</div></div>
+
+            <!-- PROMEDIOS POR RUTA -->
+            <h3 style="margin-bottom:12px;font-size:16px">📊 Promedios por ruta</h3>
+            <div id="promediosList"><div class="loading">Cargando datos...</div></div>
+
+            <!-- ÚLTIMOS REGISTROS -->
+            <h3 style="margin:20px 0 12px;font-size:16px">🕐 Últimos registros</h3>
+            <div id="registrosList"><div class="loading">Cargando registros...</div></div>
         </section>
 
         <!-- MAPA -->
         <section class="section" id="secMapa">
-            <div class="sec-header"><h2>🗺️ Zonas Calientes</h2><p>Demanda en tiempo real</p></div>
-            <div class="map-box">
-                <div class="map-grid"></div>
-                <div class="map-dot" style="top:20%;left:30%"></div><div class="map-dot" style="top:40%;left:65%;animation-delay:.5s"></div>
-                <div class="map-dot" style="top:65%;left:25%;animation-delay:1s"></div><div class="map-dot" style="top:30%;left:80%;animation-delay:1.5s"></div>
-                <div class="map-center"><div class="ic">🗺️</div><p>Conductores activos</p></div>
-            </div>
-            <div class="zones-grid">
-                <div class="zone-card"><div class="ze">🏛️</div><div class="zn">Centro</div><div class="zd" id="zoneCentro">0 conductores</div><div class="zs">⚡ x1.8</div></div>
-                <div class="zone-card"><div class="ze">✈️</div><div class="zn">Aeropuerto</div><div class="zd" id="zoneAero">0 conductores</div><div class="zs">⚡ x2.1</div></div>
-                <div class="zone-card"><div class="ze">🌃</div><div class="zn">Zona Rosa</div><div class="zd" id="zoneRosa">0 conductores</div><div class="zs">⚡ x1.5</div></div>
-                <div class="zone-card"><div class="ze">🎓</div><div class="zn">Universidades</div><div class="zd" id="zoneUni">0 conductores</div><div class="zs">⚡ x1.3</div></div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;text-align:center;padding:20px">
+                <div style="font-size:80px;margin-bottom:20px">🚧</div>
+                <h2 style="font-size:22px;font-weight:800;margin-bottom:12px">Estamos trabajando para usted</h2>
+                <p style="color:var(--text-secondary);font-size:14px;line-height:1.6;max-width:300px;margin-bottom:24px">Pronto podrás ver el mapa en tiempo real con zonas calientes, conductores activos y mucho más.</p>
+                <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
+                    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;width:140px">
+                        <div style="font-size:28px;margin-bottom:8px">🗺️</div>
+                        <div style="font-size:12px;color:var(--text-muted)">Mapa en vivo</div>
+                    </div>
+                    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;width:140px">
+                        <div style="font-size:28px;margin-bottom:8px">📍</div>
+                        <div style="font-size:12px;color:var(--text-muted)">Zonas calientes</div>
+                    </div>
+                    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;width:140px">
+                        <div style="font-size:28px;margin-bottom:8px">👥</div>
+                        <div style="font-size:12px;color:var(--text-muted)">Conductores cerca</div>
+                    </div>
+                </div>
+                <div style="margin-top:24px;padding:12px 24px;background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.3);border-radius:12px;font-size:13px;color:var(--primary-light)">
+                    ⏳ Disponible en la próxima actualización
+                </div>
             </div>
         </section>
 
@@ -327,16 +385,49 @@
             <div class="profile-avatar-lg" id="profileAvatar">😎</div>
             <div class="profile-name" id="profileName">Conductor</div>
             <div class="profile-handle" id="profileHandle">@conductor</div>
-            <div class="profile-bio">🚗 Conductor profesional | 🌟 Tarifas justas | 📍 Conectando conductores</div>
+            <div style="text-align:center;color:var(--text-muted);font-size:13px;margin-bottom:12px" id="profileCity">📍 Santiago</div>
+            <div style="text-align:center;color:var(--text-muted);font-size:13px;margin-bottom:16px" id="profileVehicle">🚗 Sedán</div>
+
             <div class="profile-stats">
                 <div class="profile-stat"><div class="val" id="profilePosts">0</div><div class="lbl">Posts</div></div>
-                <div class="profile-stat"><div class="val" id="profileVotos">0</div><div class="lbl">Votos</div></div>
-                <div class="profile-stat"><div class="val">4.9</div><div class="lbl">Rating</div></div>
+                <div class="profile-stat"><div class="val" id="profileViajes">0</div><div class="lbl">Viajes</div></div>
+                <div class="profile-stat"><div class="val" id="profileGananciaTotal">\$0</div><div class="lbl">Ganancia</div></div>
             </div>
-            <div class="badges"><span class="badge purple">💎 Verificado</span><span class="badge green">🌱 Activo</span></div>
+
+            <div class="badges" id="profileBadges">
+                <span class="badge purple">💎 Miembro</span>
+            </div>
+
+            <!-- RESUMEN PERSONAL -->
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:16px">
+                <h4 style="font-size:14px;margin-bottom:12px">📊 Tu resumen</h4>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                    <div style="background:var(--bg-input);border-radius:10px;padding:12px;text-align:center">
+                        <div style="font-size:18px;font-weight:700;color:var(--secondary)" id="profileKmTotal">0</div>
+                        <div style="font-size:11px;color:var(--text-muted)">Km totales</div>
+                    </div>
+                    <div style="background:var(--bg-input);border-radius:10px;padding:12px;text-align:center">
+                        <div style="font-size:18px;font-weight:700;color:var(--primary-light)" id="profilePromedioKm">\$0</div>
+                        <div style="font-size:11px;color:var(--text-muted)">Promedio/km</div>
+                    </div>
+                    <div style="background:var(--bg-input);border-radius:10px;padding:12px;text-align:center">
+                        <div style="font-size:18px;font-weight:700;color:var(--accent)" id="profileRutaTop">-</div>
+                        <div style="font-size:11px;color:var(--text-muted)">Ruta favorita</div>
+                    </div>
+                    <div style="background:var(--bg-input);border-radius:10px;padding:12px;text-align:center">
+                        <div style="font-size:18px;font-weight:700;color:var(--danger)" id="profileDiasMiembro">0</div>
+                        <div style="font-size:11px;color:var(--text-muted)">Días activo</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MENÚ -->
             <div class="profile-menu">
-                <div class="profile-menu-item" onclick="showToast('⚙️ Próximamente','info')"><div class="menu-ic" style="background:rgba(124,58,237,.15)">⚙️</div><div class="menu-text">Configuración</div><div class="menu-arrow">›</div></div>
-                <div class="profile-menu-item" onclick="showToast('📊 Próximamente','info')"><div class="menu-ic" style="background:rgba(16,185,129,.15)">📊</div><div class="menu-text">Estadísticas</div><div class="menu-arrow">›</div></div>
+                <div class="profile-menu-item" onclick="editProfile()"><div class="menu-ic" style="background:rgba(124,58,237,.15)">✏️</div><div class="menu-text">Editar perfil</div><div class="menu-arrow">›</div></div>
+                <div class="profile-menu-item" onclick="showToast('🔔 Próximamente','info')"><div class="menu-ic" style="background:rgba(16,185,129,.15)">🔔</div><div class="menu-text">Notificaciones</div><div class="menu-arrow">›</div></div>
+                <div class="profile-menu-item" onclick="showToast('🔒 Próximamente','info')"><div class="menu-ic" style="background:rgba(245,158,11,.15)">🔒</div><div class="menu-text">Privacidad</div><div class="menu-arrow">›</div></div>
+                <div class="profile-menu-item" onclick="shareApp()"><div class="menu-ic" style="background:rgba(59,130,246,.15)">📤</div><div class="menu-text">Compartir app</div><div class="menu-arrow">›</div></div>
+                <div class="profile-menu-item" onclick="showToast('ℹ️ RidersConnect v1.0 Chile','info')"><div class="menu-ic" style="background:rgba(107,107,141,.15)">ℹ️</div><div class="menu-text">Acerca de</div><div class="menu-arrow">›</div></div>
                 <div class="profile-menu-item" onclick="logout()" style="color:var(--danger)"><div class="menu-ic" style="background:rgba(239,68,68,.15)">🚪</div><div class="menu-text">Cerrar sesión</div><div class="menu-arrow">›</div></div>
             </div>
         </section>
@@ -504,28 +595,6 @@ auth.onAuthStateChanged(function(user) {
     }
 });
 
-// ===== ENTER APP =====
-function enterApp() {
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('appContainer').classList.add('active');
-    document.getElementById('feedAvatar').textContent = currentUserData.avatar;
-    document.getElementById('profileAvatar').textContent = currentUserData.avatar;
-    document.getElementById('profileName').textContent = currentUserData.name;
-    document.getElementById('profileHandle').textContent = '@' + currentUserData.name.toLowerCase().replace(/ /g,'_');
-
-    // Set online
-    var onRef = db.ref('online/' + currentUser.uid);
-    onRef.set({ name: currentUserData.name, avatar: currentUserData.avatar, time: Date.now() });
-    onRef.onDisconnect().remove();
-
-    // Start listeners
-    listenOnline();
-    listenPosts();
-    listenTarifas();
-
-    showToast('👋 Bienvenido ' + currentUserData.name, 'success');
-}
-
 // // ===== CHAT EN TIEMPO REAL =====
 function openChat(room) {
     currentChat = room;
@@ -616,6 +685,288 @@ function getTimeAgo(timestamp) {
     if (hours < 24) return hours + 'h';
     if (days < 7) return days + 'd';
     return new Date(timestamp).toLocaleDateString();
+}
+
+// ===== TARIFAS (TIEMPO REAL) =====
+
+// Calcular ganancia/km en tiempo real
+document.addEventListener('DOMContentLoaded', function() {
+    var kmInput = document.getElementById('tarifaKm');
+    var ganInput = document.getElementById('tarifaGanancia');
+    var comunaASelect = document.getElementById('comunaA');
+    var comunaBSelect = document.getElementById('comunaB');
+
+    function updateCalc() {
+        var km = parseFloat(kmInput ? kmInput.value : 0) || 0;
+        var gan = parseFloat(ganInput ? ganInput.value : 0) || 0;
+        var cA = comunaASelect ? comunaASelect.value : '';
+        var cB = comunaBSelect ? comunaBSelect.value : '';
+
+        var porKm = km > 0 ? Math.round(gan / km) : 0;
+        var el = document.getElementById('gananciaPorKm');
+        if (el) el.textContent = '$' + porKm.toLocaleString('es-CL') + ' /km';
+
+        var tipoEl = document.getElementById('tipoRuta');
+        if (tipoEl) {
+            if (cA && cB) {
+                if (cA === cB) {
+                    tipoEl.textContent = '🔄 Viaje intercomunal (dentro de ' + cA + ')';
+                    tipoEl.style.color = 'var(--accent)';
+                } else {
+                    tipoEl.textContent = '📍 ' + cA + ' → ' + cB;
+                    tipoEl.style.color = 'var(--secondary)';
+                }
+            } else {
+                tipoEl.textContent = '-';
+                tipoEl.style.color = 'var(--text-muted)';
+            }
+        }
+    }
+
+    if (kmInput) kmInput.addEventListener('input', updateCalc);
+    if (ganInput) ganInput.addEventListener('input', updateCalc);
+    if (comunaASelect) comunaASelect.addEventListener('change', updateCalc);
+    if (comunaBSelect) comunaBSelect.addEventListener('change', updateCalc);
+});
+
+function registrarViaje() {
+    var comunaA = document.getElementById('comunaA').value;
+    var comunaB = document.getElementById('comunaB').value;
+    var km = parseFloat(document.getElementById('tarifaKm').value);
+    var ganancia = parseFloat(document.getElementById('tarifaGanancia').value);
+
+    if (!comunaA || !comunaB) { showToast('📍 Selecciona ambas comunas', 'info'); return; }
+    if (!km || km <= 0) { showToast('📏 Ingresa los kilómetros', 'info'); return; }
+    if (!ganancia || ganancia <= 0) { showToast('💰 Ingresa la ganancia', 'info'); return; }
+
+    var porKm = Math.round(ganancia / km);
+    var esIntercomunal = comunaA === comunaB;
+    var rutaKey = comunaA + ' → ' + comunaB;
+
+    db.ref('viajes').push({
+        uid: currentUser.uid,
+        user: currentUserData.name,
+        avatar: currentUserData.avatar,
+        comunaA: comunaA,
+        comunaB: comunaB,
+        rutaKey: rutaKey,
+        km: km,
+        ganancia: ganancia,
+        porKm: porKm,
+        intercomunal: esIntercomunal,
+        timestamp: Date.now()
+    });
+
+    // Post automático en el feed
+    db.ref('posts').push({
+        uid: currentUser.uid,
+        user: currentUserData.name,
+        avatar: currentUserData.avatar,
+        city: currentUserData.city,
+        content: '📊 Registré un viaje: <strong>' + rutaKey + '</strong> | ' + km + ' km | $' + ganancia.toLocaleString('es-CL') + ' | <span class="tag">$' + porKm.toLocaleString('es-CL') + '/km</span>' + (esIntercomunal ? ' 🔄 Intercomunal' : ''),
+        timestamp: Date.now(),
+        hasFare: true,
+        fareOrigin: comunaA,
+        fareDest: comunaB,
+        fareAmount: ganancia
+    });
+
+    // Limpiar
+    document.getElementById('comunaA').value = '';
+    document.getElementById('comunaB').value = '';
+    document.getElementById('tarifaKm').value = '';
+    document.getElementById('tarifaGanancia').value = '';
+    document.getElementById('gananciaPorKm').textContent = '\$0 /km';
+    document.getElementById('tipoRuta').textContent = '-';
+
+    showToast('✅ Viaje registrado!', 'success');
+}
+
+function listenTarifas() {
+    db.ref('viajes').orderByChild('timestamp').on('value', function(snap) {
+        var viajes = [];
+        var rutas = {};
+        var totalGanancia = 0;
+        var totalKm = 0;
+        var myViajes = 0;
+        var myGanancia = 0;
+        var myKm = 0;
+        var myRutas = {};
+
+        snap.forEach(function(child) {
+            var v = child.val();
+            v.id = child.key;
+            viajes.push(v);
+
+            // Agrupar por ruta
+            if (!rutas[v.rutaKey]) {
+                rutas[v.rutaKey] = { 
+                    comunaA: v.comunaA, 
+                    comunaB: v.comunaB, 
+                    registros: [], 
+                    totalGan: 0, 
+                    totalKm: 0,
+                    intercomunal: v.intercomunal 
+                };
+            }
+            rutas[v.rutaKey].registros.push(v);
+            rutas[v.rutaKey].totalGan += v.ganancia;
+            rutas[v.rutaKey].totalKm += v.km;
+            totalGanancia += v.ganancia;
+            totalKm += v.km;
+
+            // Mis stats
+            if (currentUser && v.uid === currentUser.uid) {
+                myViajes++;
+                myGanancia += v.ganancia;
+                myKm += v.km;
+                if (!myRutas[v.rutaKey]) myRutas[v.rutaKey] = 0;
+                myRutas[v.rutaKey]++;
+            }
+        });
+
+        // Stats generales
+        document.getElementById('statRegistros').textContent = viajes.length;
+        document.getElementById('statRutas').textContent = Object.keys(rutas).length;
+        var promKm = totalKm > 0 ? Math.round(totalGanancia / totalKm) : 0;
+        document.getElementById('statPromedio').textContent = '$' + promKm.toLocaleString('es-CL');
+
+        // Stats perfil
+        document.getElementById('profileViajes').textContent = myViajes;
+        document.getElementById('profileGananciaTotal').textContent = '$' + myGanancia.toLocaleString('es-CL');
+        document.getElementById('profileKmTotal').textContent = myKm.toFixed(1);
+        var myPromKm = myKm > 0 ? Math.round(myGanancia / myKm) : 0;
+        document.getElementById('profilePromedioKm').textContent = '$' + myPromKm.toLocaleString('es-CL');
+
+        // Ruta favorita
+        var topRuta = '-';
+        var topCount = 0;
+        Object.keys(myRutas).forEach(function(r) {
+            if (myRutas[r] > topCount) { topCount = myRutas[r]; topRuta = r; }
+        });
+        document.getElementById('profileRutaTop').textContent = topRuta.length > 15 ? topRuta.substring(0,15) + '...' : topRuta;
+
+        // Días miembro
+        if (currentUserData && currentUserData.createdAt) {
+            var dias = Math.floor((Date.now() - currentUserData.createdAt) / 86400000);
+            document.getElementById('profileDiasMiembro').textContent = Math.max(1, dias);
+        }
+
+        // Badges
+        var badgesHTML = '<span class="badge purple">💎 Miembro</span>';
+        if (myViajes >= 5) badgesHTML += '<span class="badge green">🚗 Conductor activo</span>';
+        if (myViajes >= 20) badgesHTML += '<span class="badge gold">🏆 Top conductor</span>';
+        if (myKm >= 100) badgesHTML += '<span class="badge green">📏 +100km</span>';
+        document.getElementById('profileBadges').innerHTML = badgesHTML;
+
+        // RENDER PROMEDIOS POR RUTA
+        var promList = document.getElementById('promediosList');
+        var rutasArr = Object.keys(rutas).map(function(key) { return rutas[key]; });
+        rutasArr.sort(function(a,b) { return b.registros.length - a.registros.length; });
+
+        if (rutasArr.length === 0) {
+            promList.innerHTML = '<div class="loading">No hay datos aún. ¡Registra tu primer viaje!</div>';
+        } else {
+            promList.innerHTML = rutasArr.map(function(r) {
+                var promGan = Math.round(r.totalGan / r.registros.length);
+                var promKmR = r.totalKm > 0 ? Math.round(r.totalGan / r.totalKm) : 0;
+                var promKmViaje = (r.totalKm / r.registros.length).toFixed(1);
+
+                return '<div class="tarifa-item">' +
+                    '<div class="tarifa-item-header"><div>' +
+                    '<h4>' + (r.intercomunal ? '🔄 ' : '📍 ') + r.comunaA + ' → ' + r.comunaB + '</h4>' +
+                    '<div class="sub">' + r.registros.length + ' registros • Prom: ' + promKmViaje + ' km</div></div>' +
+                    '<div class="price-badge">$' + promGan.toLocaleString('es-CL') + '</div></div>' +
+                    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px">' +
+                    '<div style="background:var(--bg-input);border-radius:8px;padding:8px;text-align:center">' +
+                    '<div style="font-size:16px;font-weight:700;color:var(--secondary)">$' + promKmR.toLocaleString('es-CL') + '</div>' +
+                    '<div style="font-size:10px;color:var(--text-muted)">Prom/km</div></div>' +
+                    '<div style="background:var(--bg-input);border-radius:8px;padding:8px;text-align:center">' +
+                    '<div style="font-size:16px;font-weight:700;color:var(--primary-light)">$' + Math.round(Math.min.apply(null, r.registros.map(function(x){return x.ganancia;}))).toLocaleString('es-CL') + '</div>' +
+                    '<div style="font-size:10px;color:var(--text-muted)">Mínimo</div></div>' +
+                    '<div style="background:var(--bg-input);border-radius:8px;padding:8px;text-align:center">' +
+                    '<div style="font-size:16px;font-weight:700;color:var(--accent)">$' + Math.round(Math.max.apply(null, r.registros.map(function(x){return x.ganancia;}))).toLocaleString('es-CL') + '</div>' +
+                    '<div style="font-size:10px;color:var(--text-muted)">Máximo</div></div></div>' +
+                    '<div class="mini-avatars" style="margin-top:10px">' +
+                    r.registros.slice(0,4).map(function(x){return '<div class="mini-av">' + (x.avatar||'😎') + '</div>';}).join('') +
+                    (r.registros.length > 4 ? '<div class="mini-av" style="font-size:9px;background:var(--bg-input)">+' + (r.registros.length-4) + '</div>' : '') +
+                    '</div></div>';
+            }).join('');
+        }
+
+        // RENDER ÚLTIMOS REGISTROS
+        var regList = document.getElementById('registrosList');
+        var ultimos = viajes.slice().reverse().slice(0, 10);
+
+        if (ultimos.length === 0) {
+            regList.innerHTML = '<div class="loading">Sin registros</div>';
+        } else {
+            regList.innerHTML = ultimos.map(function(v) {
+                var time = getTimeAgo(v.timestamp);
+                return '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px">' +
+                    '<div class="user-avatar sm">' + (v.avatar||'😎') + '</div>' +
+                    '<div style="flex:1;min-width:0">' +
+                    '<div style="font-size:13px;font-weight:600">' + v.user + '</div>' +
+                    '<div style="font-size:12px;color:var(--text-muted)">' + v.comunaA + ' → ' + v.comunaB + ' • ' + v.km + 'km</div></div>' +
+                    '<div style="text-align:right">' +
+                    '<div style="font-size:14px;font-weight:700;color:var(--secondary)">$' + v.ganancia.toLocaleString('es-CL') + '</div>' +
+                    '<div style="font-size:11px;color:var(--text-muted)">' + time + '</div></div></div>';
+            }).join('');
+        }
+    });
+}
+
+function updateSlider() {
+    var val = document.getElementById('tarifaSlider').value;
+    document.getElementById('sliderVal').textContent = '$' + parseFloat(val).toFixed(2);
+}
+
+// ===== PERFIL FUNCTIONS =====
+function enterApp() {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('appContainer').classList.add('active');
+    document.getElementById('feedAvatar').textContent = currentUserData.avatar;
+    document.getElementById('profileAvatar').textContent = currentUserData.avatar;
+    document.getElementById('profileName').textContent = currentUserData.name;
+    document.getElementById('profileHandle').textContent = '@' + currentUserData.name.toLowerCase().replace(/ /g,'_');
+    document.getElementById('profileCity').textContent = '📍 ' + (currentUserData.city || 'Sin definir');
+    document.getElementById('profileVehicle').textContent = '🚗 ' + (currentUserData.vehicle || 'Sedán');
+
+    var onRef = db.ref('online/' + currentUser.uid);
+    onRef.set({ name: currentUserData.name, avatar: currentUserData.avatar, time: Date.now() });
+    onRef.onDisconnect().remove();
+
+    listenOnline();
+    listenPosts();
+    listenTarifas();
+
+    showToast('👋 Bienvenido ' + currentUserData.name, 'success');
+}
+
+function editProfile() {
+    var newName = prompt('Tu nombre:', currentUserData.name);
+    if (newName && newName.trim()) {
+        db.ref('users/' + currentUser.uid + '/name').set(newName.trim());
+        currentUserData.name = newName.trim();
+        document.getElementById('profileName').textContent = newName.trim();
+        document.getElementById('profileHandle').textContent = '@' + newName.trim().toLowerCase().replace(/ /g,'_');
+        showToast('✅ Nombre actualizado', 'success');
+    }
+}
+
+function shareApp() {
+    var url = window.location.href;
+    if (navigator.share) {
+        navigator.share({
+            title: 'RidersConnect',
+            text: '🚗 Únete a la red de conductores! Tarifas justas entre todos.',
+            url: url
+        });
+    } else {
+        navigator.clipboard.writeText(url).then(function() {
+            showToast('📋 Link copiado!', 'success');
+        });
+    }
 }
 
 // ===== KEEP SESSION ALIVE =====
