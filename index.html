@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>RidersConnect</title>
     <meta name="theme-color" content="#7C3AED">
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚗</text></svg>">
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
@@ -992,6 +993,21 @@ function listenNotifications() {
     });
 }
 
+function listenOnline() {
+    // Listen for online users in the same comuna
+    db.ref('online').orderByChild('time').on('value', function(snap) {
+        var onlineUsers = [];
+        snap.forEach(function(child) {
+            var user = child.val();
+            if (user.comuna === currentUserData.comuna) {
+                onlineUsers.push(user);
+            }
+        });
+        // For now, just log or do nothing; can be extended to display online users
+        console.log('Online users in comuna:', onlineUsers.length);
+    });
+}
+
 function updateSlider() {
     var val = document.getElementById('tarifaSlider').value;
     document.getElementById('sliderVal').textContent = '$' + parseFloat(val).toFixed(2);
@@ -1149,7 +1165,7 @@ function enterApp() {
     document.getElementById('profileVehicle').textContent = '🚗 ' + (currentUserData.vehicle || 'Sedán');
 
     var onRef = db.ref('online/' + currentUser.uid);
-    onRef.set({ name: currentUserData.name, avatar: currentUserData.avatar, time: Date.now() });
+    onRef.set({ name: currentUserData.name, avatar: currentUserData.avatar, comuna: currentUserData.comuna, time: Date.now() });
     onRef.onDisconnect().remove();
 
     listenOnline();
