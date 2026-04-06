@@ -333,6 +333,23 @@
             <!-- FORMULARIO REGISTRO DE VIAJE -->
             <div class="tarifa-form">
                 <h3>🚗 Registrar viaje</h3>
+                <!-- LEER FOTO DE VIAJE CON IA -->
+                <div id="fotoViajeBox" style="border:2px dashed var(--primary);border-radius:12px;padding:16px;margin-bottom:16px;text-align:center;cursor:pointer;transition:all .3s" onclick="document.getElementById('fotoViajeInput').click()">
+                    <input type="file" id="fotoViajeInput" accept="image/*" style="display:none">
+                    <div id="fotoViajePreview" style="display:none;margin-bottom:10px">
+                        <img id="fotoViajeImg" style="max-width:100%;max-height:160px;border-radius:8px;object-fit:contain">
+                    </div>
+                    <div id="fotoViajePrompt">
+                        <div style="font-size:28px;margin-bottom:6px">📸</div>
+                        <div style="font-size:14px;font-weight:600;color:var(--primary-light)">Subir foto del resumen de viaje</div>
+                        <div style="font-size:12px;color:var(--text-muted);margin-top:4px">La IA leerá los datos y rellenará los campos automáticamente</div>
+                    </div>
+                    <div id="fotoViajeLeyendo" style="display:none">
+                        <div style="font-size:24px;margin-bottom:6px">🤖</div>
+                        <div style="font-size:14px;font-weight:600;color:var(--primary-light)">Leyendo imagen...</div>
+                    </div>
+                </div>
+
                 <div class="form-group"><label>Ciudad</label><select class="form-input" id="tarifaCiudad" onchange="updateTarifaComunas()"><option value="Santiago">Santiago</option><option value="Valparaíso">Valparaíso</option></select></div>
                 <div class="form-row">
                     <div class="form-group"><label>Comuna Origen</label>
@@ -2436,6 +2453,143 @@ switchSection = function(section) {
     }
 };
 
+// ===== LEER FOTO DE VIAJE CON IA =====
+function initFotoViaje() {
+    var input = document.getElementById('fotoViajeInput');
+    if (!input) return;
+    input.addEventListener('change', function(e) {
+        var file = e.target.files[0];
+        if (!file) return;
+
+        // Mostrar preview
+        var reader = new FileReader();
+        reader.onload = function(ev) {
+            document.getElementById('fotoViajeImg').src = ev.target.result;
+            document.getElementById('fotoViajePreview').style.display = 'block';
+            document.getElementById('fotoViajePrompt').style.display = 'none';
+            document.getElementById('fotoViajeLeyendo').style.display = 'block';
+            leerFotoConIA(ev.target.result);
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+async function leerFotoConIA(dataUrl) {
+    try {
+        // Separar base64
+        var parts = dataUrl.split(',');
+        var mediaType = parts[0].match(/:(.*?);/)[1];
+        var base64Data = parts[1];
+
+        var response = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: 'claude-sonnet-4-20250514',
+                max_tokens: 300,
+                messages: [{
+                    role: 'user',
+                    content: [
+                        {
+                            type: 'image',
+                            source: { type: 'base64', media_type: mediaType, data: base64Data }
+                        },
+                        {
+                            type: 'text',
+                            text: 'Esta es una captura de pantalla de un resumen de viaje de Uber u otra app de transporte. Extrae los datos y responde SOLO con JSON válido, sin texto adicional, con este formato exacto: {"km": 12.5, "ganancia": 5500, "origen": "Viña del Mar", "destino": "Valparaíso"}. Si no encuentras algún dato ponlo como null. El valor de ganancia debe ser en pesos chilenos CLP (número entero). El km debe ser número decimal. origen y destino son los nombres de la ciudad o comuna.'
+                        }
+                    ]
+                }]
+            })
+        });
+
+        var data = await response.json();
+        var text = data.content && data.content[0] && data.content[0].text;
+        if (!text) throw new Error('Sin respuesta de IA');
+
+        // Limpiar y parsear JSON
+        var clean = text.replace(/```json|```/g, '').trim();
+        var result = JSON.parse(clean);
+
+        // Rellenar campos
+        var filled = 0;
+        if (result.km && !isNaN(result.km)) {
+            document.getElementById('tarifaKm').value = parseFloat(result.km).toFixed(1);
+            filled++;
+        }
+        if (result.ganancia && !isNaN(result.ganancia)) {
+            document.getElementById('tarifaGanancia').value = Math.round(result.ganancia);
+            filled++;
+        }
+
+        // Intentar seleccionar ciudad/comuna origen
+        if (result.origen) {
+            var origenLower = result.origen.toLowerCase();
+            // Buscar ciudad
+            var ciudadEncontrada = null;
+            Object.keys(comunas).forEach(function(ciudad) {
+                if (ciudad.toLowerCase().includes(origenLower) || origenLower.includes(ciudad.toLowerCase())) {
+                    ciudadEncontrada = ciudad;
+                }
+                comunas[ciudad].forEach(function(c) {
+                    if (c.toLowerCase().includes(origenLower) || origenLower.includes(c.toLowerCase())) {
+                        ciudadEncontrada = ciudad;
+                    }
+                });
+            });
+            if (ciudadEncontrada) {
+                document.getElementById('tarifaCiudad').value = ciudadEncontrada;
+                updateTarifaComunas();
+                // Seleccionar comuna origen
+                setTimeout(function() {
+                    var selectA = document.getElementById('comunaA');
+                    for (var i = 0; i < selectA.options.length; i++) {
+                        if (selectA.options[i].text.toLowerCase().includes(origenLower) || origenLower.includes(selectA.options[i].text.toLowerCase())) {
+                            selectA.selectedIndex = i;
+                            break;
+                        }
+                    }
+                    // Seleccionar comuna destino
+                    if (result.destino) {
+                        var destinoLower = result.destino.toLowerCase();
+                        var selectB = document.getElementById('comunaB');
+                        for (var j = 0; j < selectB.options.length; j++) {
+                            if (selectB.options[j].text.toLowerCase().includes(destinoLower) || destinoLower.includes(selectB.options[j].text.toLowerCase())) {
+                                selectB.selectedIndex = j;
+                                break;
+                            }
+                        }
+                    }
+                }, 200);
+                filled++;
+            }
+        }
+
+        // Actualizar preview de ganancia/km
+        var kmInput = document.getElementById('tarifaKm');
+        var ganInput = document.getElementById('tarifaGanancia');
+        if (kmInput.value && ganInput.value) {
+            var gpk = parseFloat(ganInput.value) / parseFloat(kmInput.value);
+            document.getElementById('gananciaPorKm').textContent = '$' + Math.round(gpk).toLocaleString('es-CL') + ' /km';
+        }
+
+        document.getElementById('fotoViajeLeyendo').style.display = 'none';
+        document.getElementById('fotoViajePreview').style.display = 'block';
+
+        if (filled > 0) {
+            showToast('✅ IA leyó ' + filled + ' datos de la imagen', 'success');
+        } else {
+            showToast('⚠️ No se encontraron datos en la imagen', 'info');
+        }
+
+    } catch(err) {
+        console.error('Error leyendo foto:', err);
+        document.getElementById('fotoViajeLeyendo').style.display = 'none';
+        document.getElementById('fotoViajePrompt').style.display = 'block';
+        showToast('❌ No se pudo leer la imagen: ' + err.message, 'info');
+    }
+}
+
 // ===== LOGIN EVENT LISTENERS =====
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('tabLogin').addEventListener('click', function() { switchLoginTab('login'); });
@@ -2445,6 +2599,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.key === 'Enter') handleAuth();
     });
     document.getElementById('regCiudad').addEventListener('change', function() { updateComunas(); });
+    initFotoViaje();
 });
 
 // ===== KEEP SESSION ALIVE =====
