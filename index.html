@@ -266,21 +266,19 @@
     <div class="login-container">
         <div class="login-logo"><div class="icon">🚗</div><h1>RidersConnect</h1><p>La red de conductores que decide sus tarifas</p></div>
         <div class="login-tabs">
-            <button class="login-tab active" onclick="switchLoginTab('login')">Iniciar Sesión</button>
-            <button class="login-tab" onclick="switchLoginTab('register')">Registro</button>
+            <button class="login-tab active" id="tabLogin">Iniciar Sesión</button>
+            <button class="login-tab" id="tabRegister">Registro</button>
         </div>
-        <form onsubmit="handleAuth(event)">
-            <div class="register-fields" id="registerFields">
-                <div class="form-group"><label>Nombre</label><input type="text" class="form-input" id="regName" placeholder="Tu nombre"></div>
-                <div class="form-group"><label>Ciudad</label><select class="form-input" id="regCiudad" onchange="updateComunas()"><option value="">Tu ciudad</option><option>Santiago</option><option>Valparaíso</option></select></div>
-                <div class="form-group"><label>Comuna</label><select class="form-input" id="regCity"><option value="">Tu comuna</option></select></div>
-                <div class="form-group"><label>Vehículo</label><select class="form-input" id="regVehicle"><option value="">Tipo</option><option>Sedán</option><option>SUV</option><option>Compacto</option></select></div>
-            </div>
-            <div class="form-group"><label>Correo</label><input type="email" class="form-input" id="authEmail" placeholder="tu@correo.com" required></div>
-            <div class="form-group"><label>Contraseña</label><input type="password" class="form-input" id="authPassword" placeholder="••••••••" required minlength="6"></div>
-            <div class="error-msg" id="authError"></div>
-            <button type="submit" class="btn btn-primary" id="authBtn">🔐 Iniciar Sesión</button>
-        </form>
+        <div id="registerFields" class="register-fields">
+            <div class="form-group"><label>Nombre</label><input type="text" class="form-input" id="regName" placeholder="Tu nombre"></div>
+            <div class="form-group"><label>Ciudad</label><select class="form-input" id="regCiudad"><option value="">Tu ciudad</option><option>Santiago</option><option>Valparaíso</option></select></div>
+            <div class="form-group"><label>Comuna</label><select class="form-input" id="regCity"><option value="">Tu comuna</option></select></div>
+            <div class="form-group"><label>Vehículo</label><select class="form-input" id="regVehicle"><option value="">Tipo</option><option>Sedan</option><option>SUV</option><option>Compacto</option></select></div>
+        </div>
+        <div class="form-group"><label>Correo</label><input type="email" class="form-input" id="authEmail" placeholder="tu@correo.com"></div>
+        <div class="form-group"><label>Contraseña</label><input type="password" class="form-input" id="authPassword" placeholder="••••••••"></div>
+        <div class="error-msg" id="authError"></div>
+        <button class="btn btn-primary" id="authBtn">🔐 Iniciar Sesión</button>
 
     </div>
 </div>
@@ -710,9 +708,8 @@ function showToast(msg, type) {
 // ===== AUTH FUNCTIONS =====
 function switchLoginTab(tab) {
     isRegistering = (tab === 'register');
-    var tabs = document.querySelectorAll('.login-tab');
-    tabs[0].classList.toggle('active', !isRegistering);
-    tabs[1].classList.toggle('active', isRegistering);
+    document.getElementById('tabLogin').classList.toggle('active', !isRegistering);
+    document.getElementById('tabRegister').classList.toggle('active', isRegistering);
     document.getElementById('registerFields').classList.toggle('show', isRegistering);
     document.getElementById('authBtn').innerHTML = isRegistering ? '📝 Registrarse' : '🔐 Iniciar Sesión';
 }
@@ -724,16 +721,16 @@ function showError(msg) {
     setTimeout(function(){ el.style.display = 'none'; }, 5000);
 }
 
-function handleAuth(e) {
-    e.preventDefault();
-    var email = document.getElementById('authEmail').value;
+function handleAuth() {
+    var email = document.getElementById('authEmail').value.trim();
     var pass = document.getElementById('authPassword').value;
+    if (!email || !pass) { showError('Ingresa correo y contraseña'); return; }
     var btn = document.getElementById('authBtn');
     btn.disabled = true;
     btn.innerHTML = '⏳ Espera...';
 
     if (isRegistering) {
-        var name = document.getElementById('regName').value;
+        var name = document.getElementById('regName').value.trim();
         var city = document.getElementById('regCiudad').value;
         var comuna = document.getElementById('regCity').value;
         var vehicle = document.getElementById('regVehicle').value;
@@ -755,7 +752,7 @@ function handleAuth(e) {
                 vehicle: vehicle,
                 avatar: avatar,
                 role: role,
-                friends: [],
+                friends: {},
                 createdAt: Date.now()
             });
         })
@@ -769,6 +766,9 @@ function handleAuth(e) {
         });
     } else {
         auth.signInWithEmailAndPassword(email, pass)
+        .then(function() {
+            // onAuthStateChanged se encarga de entrar a la app
+        })
         .catch(function(err) {
             showError(translateError(err.code));
             btn.disabled = false;
@@ -1281,8 +1281,7 @@ function listenTarifas() {
         if (rutasArr.length === 0) {
             promList.innerHTML = '<div class="loading">No hay registros hoy. ¡Sé el primero!</div>';
         } else {
-            promList.innerHTML = '<div style="background:rgba(16,185,129,.1);border:1px solid var(--secondary);border-radius:12px;padding:12px;margin-bottom:16px;font-size:13px;text-align:center">' +
-                '📅 Mostrando datos del día actual (desde las 4:00 AM)</div>' +
+            promList.innerHTML = '<div style="background:rgba(16,185,129,.1);border:1px solid var(--secondary);border-radius:12px;padding:12px;margin-bottom:16px;font-size:13px;text-align:center">📅 Mostrando datos del día actual (desde las 4:00 AM)</div>' +
                 rutasArr.map(function(r) {
                 var promKmViaje = (r.totalKm / r.registros.length).toFixed(1);
                 var promValorRuta = r.registros.length > 0 ? Math.round(r.totalValor / r.registros.length) : 0;
@@ -2436,6 +2435,17 @@ switchSection = function(section) {
         setTimeout(initMap, 100);
     }
 };
+
+// ===== LOGIN EVENT LISTENERS =====
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('tabLogin').addEventListener('click', function() { switchLoginTab('login'); });
+    document.getElementById('tabRegister').addEventListener('click', function() { switchLoginTab('register'); });
+    document.getElementById('authBtn').addEventListener('click', function() { handleAuth(); });
+    document.getElementById('authPassword').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') handleAuth();
+    });
+    document.getElementById('regCiudad').addEventListener('change', function() { updateComunas(); });
+});
 
 // ===== KEEP SESSION ALIVE =====
 setInterval(function() {
