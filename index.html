@@ -2488,8 +2488,8 @@ async function leerFotoConIA(dataUrl) {
 
         var data = await response.json();
         // Gemini response format
-        var text = data.candidates && data.candidates[0] && data.candidates[0].content &&
-                   data.candidates[0].content.parts && data.candidates[0].content.parts[0].text;
+        // OpenRouter response format
+        var text = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
         if (!text) throw new Error('Sin respuesta de IA');
 
         // Limpiar y parsear JSON
