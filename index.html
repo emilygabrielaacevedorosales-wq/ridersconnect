@@ -602,6 +602,17 @@ let currentUserData = null;
 let currentChat = 'general';
 let chatListener = null;
 let isRegistering = false;
+
+// Map & location variables (declared here to avoid ReferenceError in auth flow)
+let map = null;
+let markers = {};
+let myMarker = null;
+let locationWatcher = null;
+let locationSharing = false;
+let mapFilter = 'all';
+let friendsList = [];
+let myPosition = null;
+let driversData = {};
 const emojis = ['😎','👨‍✈️','👩‍💼','🧑‍💻','👨‍🔧','👩‍🎤','🧔','👩‍🦰','👨‍💻','👩‍🔬'];
 
 const comunas = {
@@ -2029,13 +2040,6 @@ function shareApp() {
 }
 
 // ===== MAP & LOCATION FUNCTIONS =====
-let map = null;
-let markers = {};
-let myMarker = null;
-let locationWatcher = null;
-let locationSharing = false;
-let mapFilter = 'all';
-let friendsList = [];
 
 function initMap() {
     if (map) return;
@@ -2080,9 +2084,6 @@ function createMap(lat, lng, zoom) {
         updateMyMarker();
     }
 }
-
-let myPosition = null;
-let driversData = {};
 
 function toggleLocationSharing() {
     if (locationSharing) {
