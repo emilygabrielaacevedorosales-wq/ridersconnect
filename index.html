@@ -692,10 +692,12 @@ function switchSection(section) {
         n.classList.remove('active');
     });
 
-    var activeNav = document.querySelector('.nav-item[onclick*="switchSection(\'' + section + '\')"]');
-    if (activeNav) {
-        activeNav.classList.add('active');
-    }
+    document.querySelectorAll('.nav-item').forEach(function(n) {
+        var onclick = n.getAttribute('onclick') || '';
+        if (onclick.indexOf("'" + section + "'") !== -1) {
+            n.classList.add('active');
+        }
+    });
 }
 // ===== TOAST =====
 function showToast(msg, type) {
@@ -804,18 +806,24 @@ function logout() {
 auth.onAuthStateChanged(function(user) {
     if (user) {
         currentUser = user;
-        db.ref('users/' + user.uid).once('value').then(function(snap) {
+        db.ref("users/" + user.uid).once("value").then(function(snap) {
             currentUserData = snap.val();
             if (!currentUserData) {
-                currentUserData = { name: 'Conductor', avatar: '😎', city: 'N/A', comuna: 'N/A', vehicle: 'Sedán', role: 'user' };
+                currentUserData = { name: "Conductor", avatar: "😎", city: "Santiago", comuna: "Santiago", vehicle: "Sedán", role: "user" };
             }
-            if (!currentUserData.role) {
-                currentUserData.role = 'user';
-            }
+            if (!currentUserData.role) currentUserData.role = "user";
+            if (!currentUserData.city) currentUserData.city = "Santiago";
+            if (!currentUserData.comuna) currentUserData.comuna = "Santiago";
+            if (!currentUserData.name) currentUserData.name = "Conductor";
+            if (!currentUserData.avatar) currentUserData.avatar = "😎";
             if (currentUser.email && currentUser.email.toLowerCase() === adminEmail.toLowerCase()) {
-                currentUserData.role = 'admin';
+                currentUserData.role = "admin";
             }
-            enterApp();
+            try { enterApp(); } catch(e) { console.error("enterApp error:", e); }
+        }).catch(function(err) {
+            console.error("DB error:", err);
+            currentUserData = { name: "Conductor", avatar: "😎", city: "Santiago", comuna: "Santiago", vehicle: "Sedán", role: "user" };
+            try { enterApp(); } catch(e) { console.error(e); }
         });
     } else {
         currentUser = null;
@@ -841,7 +849,7 @@ auth.onAuthStateChanged(function(user) {
         }
 
         // Limpiar UI
-        updateLocationUI(false);
+        if (typeof updateLocationUI === "function") updateLocationUI(false);
 
         document.getElementById('loginScreen').style.display = 'flex';
         document.getElementById('appContainer').classList.remove('active');
@@ -1274,7 +1282,7 @@ function listenTarifas() {
             promList.innerHTML = '<div class="loading">No hay registros hoy. ¡Sé el primero!</div>';
         } else {
             promList.innerHTML = '<div style="background:rgba(16,185,129,.1);border:1px solid var(--secondary);border-radius:12px;padding:12px;margin-bottom:16px;font-size:13px;text-align:center">' +
-                '📅 Mostrando datos del día actual (desde las 4:00 AM)'</div>' +
+                '📅 Mostrando datos del día actual (desde las 4:00 AM)</div>' +
                 rutasArr.map(function(r) {
                 var promKmViaje = (r.totalKm / r.registros.length).toFixed(1);
                 var promValorRuta = r.registros.length > 0 ? Math.round(r.totalValor / r.registros.length) : 0;
@@ -1412,7 +1420,7 @@ function listenNotifications() {
                     msg = n.fromUser + ' aceptó tu solicitud de amistad';
                 }
                 var onclickAttr = n.fromUid ? 'onclick="openUserProfile(\'' + n.fromUid + '\')"' : '';
-                return '<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;display:flex;align-items:center;gap:8px;cursor:pointer" ' + onclickAttr + ' class="user-link"'>' +
+                return '<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;display:flex;align-items:center;gap:8px;cursor:pointer" ' + onclickAttr + ' class="user-link">' +
                     (n.fromAvatar ? '<span>' + n.fromAvatar + '</span>' : '') +
                     '<div>' + msg + ' • ' + time + '</div>' +
                     '</div>';
