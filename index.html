@@ -12,6 +12,8 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
         :root{--primary:#7C3AED;--primary-light:#8B5CF6;--secondary:#10B981;--accent:#F59E0B;--danger:#EF4444;--bg-dark:#0F0F1A;--bg-card:#1A1A2E;--bg-card-hover:#222240;--bg-input:#16162A;--text-primary:#FFF;--text-secondary:#A0A0C0;--text-muted:#6B6B8D;--border:#2A2A4A;--gradient-1:linear-gradient(135deg,#7C3AED,#3B82F6);--shadow:0 4px 20px rgba(0,0,0,.3);--shadow-primary:0 4px 20px rgba(124,58,237,.3)}
@@ -197,6 +199,17 @@
         .profile-menu{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;overflow:hidden}
         .profile-menu-item{display:flex;align-items:center;gap:12px;padding:16px;cursor:pointer;transition:all .3s;border-bottom:1px solid var(--border);font-size:14px}
         .profile-menu-item:last-child{border-bottom:none}
+        .friend-request-item{display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg-input);border-radius:12px;margin-bottom:8px}
+        .friend-request-avatar{width:44px;height:44px;border-radius:50%;background:var(--gradient-1);display:flex;align-items:center;justify-content:center;font-size:20px}
+        .friend-request-info{flex:1;min-width:0}
+        .friend-request-name{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .friend-request-meta{font-size:11px;color:var(--text-muted)}
+        .friend-request-actions{display:flex;gap:6px}
+        .friend-request-actions button{padding:6px 12px;border-radius:8px;border:none;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600}
+        .btn-accept{background:var(--secondary);color:#fff}
+        .btn-reject{background:var(--bg-card);color:var(--text-secondary);border:1px solid var(--border)!important}
+        .friend-status-pending{color:var(--accent);font-size:12px;font-weight:600}
+        .friend-status-sent{color:var(--text-muted);font-size:12px;font-weight:600}
         .profile-menu-item:hover{background:var(--bg-card-hover)}
         .menu-ic{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px}
         .menu-text{flex:1}.menu-arrow{color:var(--text-muted)}
@@ -212,6 +225,37 @@
         .toast.success{border-color:var(--secondary)}.toast.info{border-color:var(--primary)}
         .loading{text-align:center;padding:40px;color:var(--text-muted)}
         @media(min-width:768px){.main-content{max-width:600px;margin:0 auto}}
+
+        /* Mapa */
+        #map{height:100%;width:100%;border-radius:16px;z-index:1}
+        .leaflet-container{background:var(--bg-dark)!important}
+        .driver-marker{background:var(--primary);border:3px solid #fff;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 2px 10px rgba(0,0,0,.3);transition:transform .3s;cursor:pointer}
+        .driver-marker:hover{transform:scale(1.1)}
+        .driver-marker.friend{background:var(--secondary)!important}
+        .driver-marker.me{background:var(--accent)!important;border-color:#fff!important;animation:pulse 2s infinite}
+        .driver-popup{text-align:center}
+        .driver-popup .popup-name{font-weight:600;font-size:14px;margin-bottom:4px}
+        .driver-popup .popup-info{font-size:12px;color:var(--text-muted)}
+        .driver-popup .popup-actions{margin-top:8px;display:flex;gap:8px;justify-content:center}
+        .driver-popup button{padding:6px 12px;border-radius:8px;border:none;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif}
+        .driver-popup .btn-chat{background:var(--gradient-1);color:#fff}
+        .driver-popup .btn-profile{background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border)}
+        .nearby-driver-item{display:flex;align-items:center;gap:12px;padding:10px;background:var(--bg-input);border-radius:12px;margin-bottom:8px;cursor:pointer;transition:all .3s}
+        .nearby-driver-item:hover{background:var(--bg-card-hover);border:1px solid var(--primary)}
+        .nearby-driver-avatar{width:44px;height:44px;border-radius:50%;background:var(--gradient-1);display:flex;align-items:center;justify-content:center;font-size:20px}
+        .nearby-driver-info{flex:1}
+        .nearby-driver-name{font-weight:600;font-size:13px}
+        .nearby-driver-meta{font-size:11px;color:var(--text-muted)}
+        .nearby-driver-distance{font-size:12px;color:var(--secondary);font-weight:600}
+        .zone-item{display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg-input);border-radius:12px;margin-bottom:8px}
+        .zone-heatmap{width:60px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;position:relative;overflow:hidden}
+        .zone-heatmap.high{background:linear-gradient(135deg,var(--danger),#dc2626)}
+        .zone-heatmap.medium{background:linear-gradient(135deg,var(--accent),#d97706)}
+        .zone-heatmap.low{background:linear-gradient(135deg,var(--secondary),#059669)}
+        .zone-info{flex:1}
+        .zone-name{font-weight:600;font-size:13px}
+        .zone-count{font-size:11px;color:var(--text-muted)}
+        .zone-trend{font-size:12px;font-weight:600}
     </style>
 </head>
 <body>
@@ -273,10 +317,19 @@
         <section class="section" id="secTarifas">
             <div class="sec-header"><h2>💰 Tarifas Justas</h2><p>Registra tus viajes y entre todos definimos la tarifa óptima</p></div>
             
+            <!-- Indicador de reset diario -->
+            <div style="background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.3);border-radius:12px;padding:12px;margin-bottom:16px;display:flex;align-items:center;gap:10px">
+                <div style="font-size:20px">🕓</div>
+                <div style="flex:1">
+                    <div style="font-size:13px;font-weight:600;color:var(--primary-light)">Datos frescos cada día</div>
+                    <div style="font-size:11px;color:var(--text-muted)">Los contadores se reinician a las 4:00 AM • Próximo reset: <span id="nextResetTime">--</span></div>
+                </div>
+            </div>
+
             <div class="stats-row">
-                <div class="stat-card"><div class="stat-val green" id="statRegistros">0</div><div class="stat-label">Registros hoy</div></div>
-                <div class="stat-card"><div class="stat-val purple" id="statRutas">0</div><div class="stat-label">Rutas</div></div>
-                <div class="stat-card"><div class="stat-val amber" id="statPromedio">0 km</div><div class="stat-label">Promedio km/viaje</div></div>
+                <div class="stat-card"><div class="stat-val green" id="statRegistros">0</div><div class="stat-label">Viajes hoy</div></div>
+                <div class="stat-card"><div class="stat-val purple" id="statRutas">0</div><div class="stat-label">Rutas hoy</div></div>
+                <div class="stat-card"><div class="stat-val amber" id="statPromedio">0 km</div><div class="stat-label">Promedio hoy</div></div>
             </div>
 
             <!-- FORMULARIO REGISTRO DE VIAJE -->
@@ -322,26 +375,57 @@
 
         <!-- MAPA -->
         <section class="section" id="secMapa">
-            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;text-align:center;padding:20px">
-                <div style="font-size:80px;margin-bottom:20px">🚧</div>
-                <h2 style="font-size:22px;font-weight:800;margin-bottom:12px">Estamos trabajando para usted</h2>
-                <p style="color:var(--text-secondary);font-size:14px;line-height:1.6;max-width:300px;margin-bottom:24px">Pronto podrás ver el mapa en tiempo real con zonas calientes, conductores activos y mucho más.</p>
-                <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
-                    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;width:140px">
-                        <div style="font-size:28px;margin-bottom:8px">🗺️</div>
-                        <div style="font-size:12px;color:var(--text-muted)">Mapa en vivo</div>
-                    </div>
-                    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;width:140px">
-                        <div style="font-size:28px;margin-bottom:8px">📍</div>
-                        <div style="font-size:12px;color:var(--text-muted)">Zonas calientes</div>
-                    </div>
-                    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;width:140px">
-                        <div style="font-size:28px;margin-bottom:8px">👥</div>
-                        <div style="font-size:12px;color:var(--text-muted)">Conductores cerca</div>
+            <div class="sec-header" style="margin-bottom:12px">
+                <h2>🗺️ Mapa en Vivo</h2>
+                <p>Conductores activos en tiempo real</p>
+            </div>
+
+            <!-- Mi estado de ubicación -->
+            <div id="locationStatus" style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
+                <div style="display:flex;align-items:center;gap:10px">
+                    <div id="locationDot" style="width:12px;height:12px;border-radius:50%;background:var(--text-muted);animation:none"></div>
+                    <span id="locationText" style="font-size:13px">Ubicación desactivada</span>
+                </div>
+                <button class="btn btn-small" id="locationToggle" onclick="toggleLocationSharing()">Activar</button>
+            </div>
+
+            <!-- Filtros de mapa -->
+            <div style="display:flex;gap:8px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px">
+                <button class="btn btn-small" id="filterAll" onclick="setMapFilter('all')" style="background:var(--gradient-1)">Todos</button>
+                <button class="btn btn-small" id="filterComuna" onclick="setMapFilter('comuna')">Mi comuna</button>
+                <button class="btn btn-small" id="filterCity" onclick="setMapFilter('city')">Mi ciudad</button>
+                <button class="btn btn-small" id="filterFriends" onclick="setMapFilter('friends')">Amigos</button>
+            </div>
+
+            <!-- Mapa -->
+            <div id="mapContainer" style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;height:350px;position:relative;overflow:hidden;margin-bottom:12px">
+                <div id="map" style="width:100%;height:100%"></div>
+                <div id="mapLoading" style="position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:var(--bg-card);z-index:10">
+                    <div style="text-align:center">
+                        <div style="font-size:48px;margin-bottom:12px">🗺️</div>
+                        <div style="font-size:14px;color:var(--text-muted)">Cargando mapa...</div>
                     </div>
                 </div>
-                <div style="margin-top:24px;padding:12px 24px;background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.3);border-radius:12px;font-size:13px;color:var(--primary-light)">
-                    ⏳ Disponible en la próxima actualización
+            </div>
+
+            <!-- Conductores cerca -->
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:12px">
+                <h4 style="font-size:14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
+                    <span>👥 Conductores cerca</span>
+                    <span id="nearbyCount" style="font-size:12px;color:var(--text-muted)">0 encontrados</span>
+                </h4>
+                <div id="nearbyDrivers" style="max-height:200px;overflow-y:auto">
+                    <div class="loading">Activa tu ubicación para ver conductores</div>
+                </div>
+            </div>
+
+            <!-- Zonas calientes -->
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:16px">
+                <h4 style="font-size:14px;margin-bottom:12px">🔥 Zonas con más actividad</h4>
+                <div id="hotZones">
+                    <div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">
+                        📊 Datos insuficientes para mostrar zonas calientes
+                    </div>
                 </div>
             </div>
         </section>
@@ -383,7 +467,7 @@
             <div class="profile-handle" id="profileHandle">@conductor</div>
             <div style="text-align:center;color:var(--text-muted);font-size:13px;margin-bottom:12px" id="profileCity">📍 Santiago</div>
             <div style="text-align:center;color:var(--text-muted);font-size:13px;margin-bottom:8px" id="profileVehicle">🚗 Sedán</div>
-            <div style="text-align:center;margin-bottom:16px"><button class="btn btn-small" id="profileFriendBtn" style="min-width:160px;display:none" onclick="toggleFriend()">Agregar amigo</button></div>
+            <div style="text-align:center;margin-bottom:16px"><button class="btn btn-small" id="profileFriendBtn" style="min-width:180px;display:none" onclick="handleFriendAction()">Agregar amigo</button></div>
 
             <div class="profile-stats">
                 <div class="profile-stat"><div class="val" id="profilePosts">0</div><div class="lbl">Posts</div></div>
@@ -406,25 +490,65 @@
                 <span class="badge purple">💎 Miembro</span>
             </div>
 
-            <!-- RESUMEN PERSONAL -->
+            <!-- SOLICITUDES DE AMISTAD PENDIENTES -->
+            <div id="friendRequestsSection" style="display:none;background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:16px">
+                <h4 style="font-size:14px;margin-bottom:12px;display:flex;align-items:center;gap:8px">
+                    <span>📨 Solicitudes de amistad</span>
+                    <span id="requestCount" style="background:var(--danger);color:#fff;padding:2px 8px;border-radius:10px;font-size:11px">0</span>
+                </h4>
+                <div id="friendRequestsList"></div>
+            </div>
+
+            <!-- RESUMEN DEL DÍA -->
             <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:16px">
-                <h4 style="font-size:14px;margin-bottom:12px">📊 Tu resumen</h4>
+                <h4 style="font-size:14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
+                    <span>📊 Resumen del día</span>
+                    <span style="font-size:11px;color:var(--primary-light)">Hoy</span>
+                </h4>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
                     <div style="background:var(--bg-input);border-radius:10px;padding:12px;text-align:center">
                         <div style="font-size:18px;font-weight:700;color:var(--secondary)" id="profileKmTotal">0</div>
-                        <div style="font-size:11px;color:var(--text-muted)">Km totales</div>
+                        <div style="font-size:11px;color:var(--text-muted)">Km hoy</div>
                     </div>
                     <div style="background:var(--bg-input);border-radius:10px;padding:12px;text-align:center">
                         <div style="font-size:18px;font-weight:700;color:var(--primary-light)" id="profilePromedioKm">0 km</div>
-                        <div style="font-size:11px;color:var(--text-muted)">Promedio km/viaje</div>
+                        <div style="font-size:11px;color:var(--text-muted)">Promedio hoy</div>
                     </div>
                     <div style="background:var(--bg-input);border-radius:10px;padding:12px;text-align:center">
                         <div style="font-size:18px;font-weight:700;color:var(--accent)" id="profileRutaTop">-</div>
-                        <div style="font-size:11px;color:var(--text-muted)">Ruta favorita</div>
+                        <div style="font-size:11px;color:var(--text-muted)">Ruta favorita hoy</div>
                     </div>
                     <div style="background:var(--bg-input);border-radius:10px;padding:12px;text-align:center">
-                        <div style="font-size:18px;font-weight:700;color:var(--danger)" id="profileDiasMiembro">0</div>
-                        <div style="font-size:11px;color:var(--text-muted)">Días activo</div>
+                        <div style="font-size:18px;font-weight:700;color:var(--danger)" id="profileViajesHoy">0</div>
+                        <div style="font-size:11px;color:var(--text-muted)">Viajes hoy</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HISTÓRICO ACUMULADO -->
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:16px">
+                <h4 style="font-size:14px;margin-bottom:12px;display:flex;align-items:center;gap:8px">
+                    📈 Histórico total
+                    <span style="font-size:11px;color:var(--text-muted);font-weight:400">(Todos los tiempos)</span>
+                </h4>
+                <div id="historicoStats">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                        <div style="background:var(--bg-input);border-radius:10px;padding:12px;text-align:center">
+                            <div style="font-size:18px;font-weight:700;color:var(--secondary)" id="histTotalKm">0</div>
+                            <div style="font-size:11px;color:var(--text-muted)">Km totales</div>
+                        </div>
+                        <div style="background:var(--bg-input);border-radius:10px;padding:12px;text-align:center">
+                            <div style="font-size:18px;font-weight:700;color:var(--primary-light)" id="histTotalViajes">0</div>
+                            <div style="font-size:11px;color:var(--text-muted)">Viajes totales</div>
+                        </div>
+                        <div style="background:var(--bg-input);border-radius:10px;padding:12px;text-align:center">
+                            <div style="font-size:18px;font-weight:700;color:var(--accent)" id="histRutaFavorita">-</div>
+                            <div style="font-size:11px;color:var(--text-muted)">Ruta favorita histórica</div>
+                        </div>
+                        <div style="background:var(--bg-input);border-radius:10px;padding:12px;text-align:center">
+                            <div style="font-size:18px;font-weight:700;color:var(--danger)" id="histDiasActivos">0</div>
+                            <div style="font-size:11px;color:var(--text-muted)">Días con viajes</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -655,6 +779,11 @@ function translateError(code) {
 function logout() {
     if (currentUser) {
         db.ref('online/' + currentUser.uid).remove();
+        // También remover ubicación si está activa
+        if (locationSharing) {
+            stopLocationSharing();
+        }
+        db.ref('locations/' + currentUser.uid).remove();
     }
     auth.signOut();
     showToast('👋 Sesión cerrada', 'info');
@@ -680,6 +809,29 @@ auth.onAuthStateChanged(function(user) {
     } else {
         currentUser = null;
         currentUserData = null;
+        friendsList = [];
+
+        // Limpiar mapa
+        if (locationWatcher) {
+            navigator.geolocation.clearWatch(locationWatcher);
+            locationWatcher = null;
+        }
+        locationSharing = false;
+        myPosition = null;
+
+        // Remover todos los marcadores
+        Object.keys(markers).forEach(uid => {
+            if (map) map.removeLayer(markers[uid]);
+        });
+        markers = {};
+        if (myMarker && map) {
+            map.removeLayer(myMarker);
+            myMarker = null;
+        }
+
+        // Limpiar UI
+        updateLocationUI(false);
+
         document.getElementById('loginScreen').style.display = 'flex';
         document.getElementById('appContainer').classList.remove('active');
     }
@@ -875,9 +1027,96 @@ function registrarViaje() {
     showToast('✅ Viaje registrado!', 'success');
 }
 
+// ===== FUNCIONES DE FECHA Y RESET =====
+function getStartOfDay() {
+    // Obtiene el timestamp de las 4 AM del día actual
+    var now = new Date();
+    var startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 4, 0, 0);
+    // Si son menos de las 4 AM, el día comenzó ayer a las 4 AM
+    if (now < startOfDay) {
+        startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 4, 0, 0);
+    }
+    return startOfDay.getTime();
+}
+
+function getTodayKey() {
+    // Genera una clave única para el día actual (desde las 4 AM)
+    var startOfDay = getStartOfDay();
+    var date = new Date(startOfDay);
+    return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+}
+
+function calcularTiempoReset() {
+    var nextResetEl = document.getElementById('nextResetTime');
+    if (!nextResetEl) return;
+
+    var now = new Date();
+    var nextReset = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 4, 0, 0);
+
+    // Si ya pasaron las 4 AM, el próximo reset es mañana a las 4 AM
+    if (now >= nextReset) {
+        nextReset = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 4, 0, 0);
+    }
+
+    var diff = nextReset - now;
+    var hours = Math.floor(diff / 3600000);
+    var minutes = Math.floor((diff % 3600000) / 60000);
+
+    if (hours > 0) {
+        nextResetEl.textContent = hours + 'h ' + minutes + 'm';
+    } else {
+        nextResetEl.textContent = minutes + ' min';
+    }
+
+    // Actualizar cada minuto
+    if (!window.resetTimer) {
+        window.resetTimer = setInterval(calcularTiempoReset, 60000);
+    }
+}
+
+function formatDateForDisplay(date) {
+    // Formato: "5 de abril" o "Ayer" o "Hoy"
+    var today = new Date();
+    today.setHours(4, 0, 0, 0);
+    var yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    var checkDate = new Date(date);
+    checkDate.setHours(4, 0, 0, 0);
+
+    if (checkDate.getTime() === today.getTime()) return 'Hoy';
+    if (checkDate.getTime() === yesterday.getTime()) return 'Ayer';
+
+    var months = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+    return checkDate.getDate() + ' de ' + months[checkDate.getMonth()];
+}
+
 function listenTarifas() {
+    // Escuchar cambios en viajes (para histórico completo)
     db.ref('viajes').orderByChild('timestamp').on('value', function(snap) {
-        var viajes = [];
+        var allViajes = [];
+        var viajesHoy = [];
+        var viajesAyer = [];
+        var viajesAntes = [];
+        var startOfToday = getStartOfDay();
+        var startOfYesterday = startOfToday - 86400000;
+
+        snap.forEach(function(child) {
+            var v = child.val();
+            v.id = child.key;
+            allViajes.push(v);
+
+            // Clasificar por fecha
+            if (v.timestamp >= startOfToday) {
+                viajesHoy.push(v);
+            } else if (v.timestamp >= startOfYesterday) {
+                viajesAyer.push(v);
+            } else {
+                viajesAntes.push(v);
+            }
+        });
+
+        // Procesar datos del DÍA ACTUAL para estadísticas principales
         var rutas = {};
         var totalKm = 0;
         var totalValor = 0;
@@ -885,20 +1124,16 @@ function listenTarifas() {
         var myKm = 0;
         var myRutas = {};
 
-        snap.forEach(function(child) {
-            var v = child.val();
-            v.id = child.key;
-            viajes.push(v);
-
+        viajesHoy.forEach(function(v) {
             // Agrupar por ruta
             if (!rutas[v.rutaKey]) {
-                rutas[v.rutaKey] = { 
-                    comunaA: v.comunaA, 
-                    comunaB: v.comunaB, 
-                    registros: [], 
+                rutas[v.rutaKey] = {
+                    comunaA: v.comunaA,
+                    comunaB: v.comunaB,
+                    registros: [],
                     totalKm: 0,
                     totalValor: 0,
-                    intercomunal: v.intercomunal 
+                    intercomunal: v.intercomunal
                 };
             }
             rutas[v.rutaKey].registros.push(v);
@@ -907,7 +1142,7 @@ function listenTarifas() {
             totalKm += v.km;
             totalValor += (v.ganancia || 0);
 
-            // Mis stats
+            // Mis stats del día
             if (currentUser && v.uid === currentUser.uid) {
                 myViajes++;
                 myKm += v.km;
@@ -916,25 +1151,94 @@ function listenTarifas() {
             }
         });
 
-        // Stats generales
-        document.getElementById('statRegistros').textContent = viajes.length;
+        // Calcular estadísticas HISTÓRICAS (todos los tiempos)
+        var histRutas = {};
+        var histMyViajes = 0;
+        var histMyKm = 0;
+
+        allViajes.forEach(function(v) {
+            if (!histRutas[v.rutaKey]) {
+                histRutas[v.rutaKey] = { count: 0, km: 0 };
+            }
+            histRutas[v.rutaKey].count++;
+            histRutas[v.rutaKey].km += v.km;
+
+            if (currentUser && v.uid === currentUser.uid) {
+                histMyViajes++;
+                histMyKm += v.km;
+            }
+        });
+
+        // Stats generales del DÍA
+        document.getElementById('statRegistros').textContent = viajesHoy.length;
         document.getElementById('statRutas').textContent = Object.keys(rutas).length;
-        var promValor = viajes.length > 0 ? Math.round(totalValor / viajes.length) : 0;
+        var promValor = viajesHoy.length > 0 ? Math.round(totalValor / viajesHoy.length) : 0;
         document.getElementById('statPromedio').textContent = '$' + promValor.toLocaleString('es-CL');
 
-        // Stats perfil
+        // Stats perfil - DÍA ACTUAL
         document.getElementById('profileViajes').textContent = myViajes;
-        document.getElementById('profileKmTotal').textContent = myKm.toFixed(1) + ' km';
+        // Nota: profileKmTotal ahora muestra el día, veremos de crear otro para histórico
+        var profileKmTotalEl = document.getElementById('profileKmTotal');
+        if (profileKmTotalEl) profileKmTotalEl.textContent = myKm.toFixed(1) + ' km';
         var myPromKm = myKm > 0 ? (myKm / myViajes).toFixed(1) : 0;
-        document.getElementById('profilePromedioKm').textContent = myPromKm + ' km';
+        var profilePromedioKmEl = document.getElementById('profilePromedioKm');
+        if (profilePromedioKmEl) profilePromedioKmEl.textContent = myPromKm + ' km';
 
-        // Ruta favorita
+        // Ruta favorita del DÍA
         var topRuta = '-';
         var topCount = 0;
         Object.keys(myRutas).forEach(function(r) {
             if (myRutas[r] > topCount) { topCount = myRutas[r]; topRuta = r; }
         });
-        document.getElementById('profileRutaTop').textContent = topRuta.length > 15 ? topRuta.substring(0,15) + '...' : topRuta;
+        var profileRutaTopEl = document.getElementById('profileRutaTop');
+        if (profileRutaTopEl) profileRutaTopEl.textContent = topRuta.length > 15 ? topRuta.substring(0,15) + '...' : topRuta;
+
+        // Viajes hoy
+        var profileViajesHoyEl = document.getElementById('profileViajesHoy');
+        if (profileViajesHoyEl) profileViajesHoyEl.textContent = myViajes;
+
+        // HISTÓRICO ACUMULADO
+        // Calcular estadísticas históricas
+        var histTotalKm = 0;
+        var histTotalViajes = 0;
+        var histRutasCount = {};
+        var histDias = {};
+
+        allViajes.forEach(function(v) {
+            if (currentUser && v.uid === currentUser.uid) {
+                histTotalKm += v.km;
+                histTotalViajes++;
+
+                // Contar rutas
+                if (!histRutasCount[v.rutaKey]) histRutasCount[v.rutaKey] = 0;
+                histRutasCount[v.rutaKey]++;
+
+                // Contar días únicos
+                var fecha = new Date(v.timestamp);
+                var diaKey = fecha.getFullYear() + '-' + String(fecha.getMonth()+1).padStart(2,'0') + '-' + String(fecha.getDate()).padStart(2,'0');
+                histDias[diaKey] = true;
+            }
+        });
+
+        // Ruta favorita histórica
+        var histTopRuta = '-';
+        var histTopCount = 0;
+        Object.keys(histRutasCount).forEach(function(r) {
+            if (histRutasCount[r] > histTopCount) { histTopCount = histRutasCount[r]; histTopRuta = r; }
+        });
+
+        // Actualizar DOM histórico
+        var histTotalKmEl = document.getElementById('histTotalKm');
+        if (histTotalKmEl) histTotalKmEl.textContent = histTotalKm.toFixed(1);
+
+        var histTotalViajesEl = document.getElementById('histTotalViajes');
+        if (histTotalViajesEl) histTotalViajesEl.textContent = histTotalViajes;
+
+        var histRutaFavoritaEl = document.getElementById('histRutaFavorita');
+        if (histRutaFavoritaEl) histRutaFavoritaEl.textContent = histTopRuta.length > 15 ? histTopRuta.substring(0,15) + '...' : histTopRuta;
+
+        var histDiasActivosEl = document.getElementById('histDiasActivos');
+        if (histDiasActivosEl) histDiasActivosEl.textContent = Object.keys(histDias).length;
 
         // Días miembro
         if (currentUserData && currentUserData.createdAt) {
@@ -942,22 +1246,25 @@ function listenTarifas() {
             document.getElementById('profileDiasMiembro').textContent = Math.max(1, dias);
         }
 
-        // Badges
+        // Badges (basadas en histórico)
         var badgesHTML = '<span class="badge purple">💎 Miembro</span>';
-        if (myViajes >= 5) badgesHTML += '<span class="badge green">🚗 Conductor activo</span>';
-        if (myViajes >= 20) badgesHTML += '<span class="badge gold">🏆 Top conductor</span>';
-        if (myKm >= 100) badgesHTML += '<span class="badge green">📏 +100km</span>';
+        if (histTotalViajes >= 5) badgesHTML += '<span class="badge green">🚗 Conductor activo</span>';
+        if (histTotalViajes >= 20) badgesHTML += '<span class="badge gold">🏆 Top conductor</span>';
+        if (histTotalKm >= 100) badgesHTML += '<span class="badge green">📏 +100km</span>';
+        if (Object.keys(histDias).length >= 7) badgesHTML += '<span class="badge gold">🔥 7 días activo</span>';
         document.getElementById('profileBadges').innerHTML = badgesHTML;
 
-        // RENDER PROMEDIOS POR RUTA
+        // RENDER PROMEDIOS POR RUTA (del día actual)
         var promList = document.getElementById('promediosList');
         var rutasArr = Object.keys(rutas).map(function(key) { return rutas[key]; });
         rutasArr.sort(function(a,b) { return b.registros.length - a.registros.length; });
 
         if (rutasArr.length === 0) {
-            promList.innerHTML = '<div class="loading">No hay datos aún. ¡Registra tu primer viaje!</div>';
+            promList.innerHTML = '<div class="loading">No hay registros hoy. ¡Sé el primero!</div>';
         } else {
-            promList.innerHTML = rutasArr.map(function(r) {
+            promList.innerHTML = '<div style="background:rgba(16,185,129,.1);border:1px solid var(--secondary);border-radius:12px;padding:12px;margin-bottom:16px;font-size:13px;text-align:center">' +
+                '📅 Mostrando datos del día actual (desde las 4:00 AM)'</div>' +
+                rutasArr.map(function(r) {
                 var promKmViaje = (r.totalKm / r.registros.length).toFixed(1);
                 var promValorRuta = r.registros.length > 0 ? Math.round(r.totalValor / r.registros.length) : 0;
                 var minKm = Math.min.apply(null, r.registros.map(function(x){return x.km;}));
@@ -985,26 +1292,87 @@ function listenTarifas() {
             }).join('');
         }
 
-        // RENDER ÚLTIMOS REGISTROS
-        var regList = document.getElementById('registrosList');
-        var ultimos = viajes.slice().reverse().slice(0, 10);
-
-        if (ultimos.length === 0) {
-            regList.innerHTML = '<div class="loading">Sin registros</div>';
-        } else {
-            regList.innerHTML = ultimos.map(function(v) {
-                var time = getTimeAgo(v.timestamp);
-                return '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px">' +
-                    '<div class="user-avatar sm">' + (v.avatar||'😎') + '</div>' +
-                    '<div style="flex:1;min-width:0">' +
-                    '<div style="font-size:13px;font-weight:600">' + v.user + '</div>' +
-                    '<div style="font-size:12px;color:var(--text-muted)">' + v.comunaA + ' → ' + v.comunaB + ' • ' + v.km + 'km</div></div>' +
-                    '<div style="text-align:right">' +
-                    '<div style="font-size:14px;font-weight:700;color:var(--secondary)">$' + v.ganancia.toLocaleString('es-CL') + '</div>' +
-                    '<div style="font-size:11px;color:var(--text-muted)">' + time + '</div></div></div>';
-            }).join('');
-        }
+        // RENDER HISTÓRICO DE VIAJES (últimos 3 días)
+        renderHistoricoViajes(allViajes, viajesHoy, viajesAyer, viajesAntes);
     });
+}
+
+function renderHistoricoViajes(allViajes, viajesHoy, viajesAyer, viajesAntes) {
+    var regList = document.getElementById('registrosList');
+    if (!regList) return;
+
+    var html = '';
+
+    // VIAJES DE HOY
+    if (viajesHoy.length > 0) {
+        html += '<div style="background:var(--gradient-1);border-radius:12px;padding:8px 12px;margin-bottom:12px;font-size:13px;font-weight:600;color:#fff;display:flex;align-items:center;gap:8px">' +
+            '📅 Hoy (' + viajesHoy.length + ' viajes)</div>';
+        html += viajesHoy.slice().reverse().slice(0, 5).map(function(v) {
+            var time = new Date(v.timestamp).toLocaleTimeString('es-CL', {hour: '2-digit', minute: '2-digit'});
+            return renderViajeItem(v, time);
+        }).join('');
+        if (viajesHoy.length > 5) {
+            html += '<div style="text-align:center;padding:8px;color:var(--text-muted);font-size:12px">... y ' + (viajesHoy.length - 5) + ' viajes más</div>';
+        }
+    }
+
+    // VIAJES DE AYER
+    if (viajesAyer.length > 0) {
+        html += '<div style="background:var(--bg-input);border:1px solid var(--border);border-radius:12px;padding:8px 12px;margin:16px 0 12px;font-size:13px;font-weight:600;color:var(--text-secondary);display:flex;align-items:center;gap:8px">' +
+            '📅 Ayer (' + viajesAyer.length + ' viajes)</div>';
+        html += viajesAyer.slice().reverse().slice(0, 3).map(function(v) {
+            var time = new Date(v.timestamp).toLocaleTimeString('es-CL', {hour: '2-digit', minute: '2-digit'});
+            return renderViajeItem(v, time);
+        }).join('');
+    }
+
+    // VIAJES ANTERIORES (resumen)
+    if (viajesAntes.length > 0) {
+        html += '<div style="background:var(--bg-input);border:1px solid var(--border);border-radius:12px;padding:8px 12px;margin:16px 0 12px;font-size:13px;font-weight:600;color:var(--text-secondary);display:flex;align-items:center;gap:8px">' +
+            '📊 Días anteriores (' + viajesAntes.length + ' viajes totales)</div>';
+
+        // Agrupar por día
+        var diasAnteriores = {};
+        viajesAntes.forEach(function(v) {
+            var fecha = new Date(v.timestamp);
+            var key = fecha.getFullYear() + '-' + String(fecha.getMonth()+1).padStart(2,'0') + '-' + String(fecha.getDate()).padStart(2,'0');
+            if (!diasAnteriores[key]) diasAnteriores[key] = [];
+            diasAnteriores[key].push(v);
+        });
+
+        var diasKeys = Object.keys(diasAnteriores).sort().reverse().slice(0, 3);
+        diasKeys.forEach(function(dia) {
+            var viajesDia = diasAnteriores[dia];
+            var totalKm = viajesDia.reduce(function(sum, v) { return sum + v.km; }, 0);
+            var totalGanancia = viajesDia.reduce(function(sum, v) { return sum + (v.ganancia || 0); }, 0);
+            html += '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">' +
+                '<div>' +
+                '<div style="font-size:13px;font-weight:600">' + formatDateForDisplay(new Date(dia)) + '</div>' +
+                '<div style="font-size:11px;color:var(--text-muted)">' + viajesDia.length + ' viajes</div>' +
+                '</div>' +
+                '<div style="text-align:right">' +
+                '<div style="font-size:14px;font-weight:700;color:var(--secondary)">$' + totalGanancia.toLocaleString('es-CL') + '</div>' +
+                '<div style="font-size:11px;color:var(--text-muted)">' + totalKm.toFixed(1) + ' km</div>' +
+                '</div></div>';
+        });
+    }
+
+    if (allViajes.length === 0) {
+        html = '<div class="loading">Sin registros. ¡Registra tu primer viaje!</div>';
+    }
+
+    regList.innerHTML = html;
+}
+
+function renderViajeItem(v, time) {
+    return '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;animation:slideUp .3s ease-out">' +
+        '<div class="user-avatar sm">' + (v.avatar||'😎') + '</div>' +
+        '<div style="flex:1;min-width:0">' +
+        '<div style="font-size:13px;font-weight:600">' + v.user + '</div>' +
+        '<div style="font-size:12px;color:var(--text-muted)">' + v.comunaA + ' → ' + v.comunaB + ' • ' + v.km + 'km</div></div>' +
+        '<div style="text-align:right">' +
+        '<div style="font-size:14px;font-weight:700;color:var(--secondary)">$' + (v.ganancia || 0).toLocaleString('es-CL') + '</div>' +
+        '<div style="font-size:11px;color:var(--text-muted)">' + time + '</div></div></div>';
 }
 
 function listenNotifications() {
@@ -1014,13 +1382,29 @@ function listenNotifications() {
             notifs.push(child.val());
         });
         var list = document.getElementById('notificationsList');
+        // Calcular tiempo hasta próximo reset
+        calcularTiempoReset();
+
         if (notifs.length === 0) {
             list.innerHTML = 'No hay notificaciones';
         } else {
             list.innerHTML = notifs.slice().reverse().map(function(n) {
                 var time = getTimeAgo(n.timestamp);
-                var msg = n.fromUser + ' ' + (n.type === 'like' ? 'le dio me gusta a tu post' : 'comentó en tu post');
-                return '<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:13px">' + msg + ' • ' + time + '</div>';
+                var msg = '';
+                if (n.type === 'like') {
+                    msg = n.fromUser + ' le dio me gusta a tu post';
+                } else if (n.type === 'comment') {
+                    msg = n.fromUser + ' comentó en tu post';
+                } else if (n.type === 'friend_request') {
+                    msg = n.fromUser + ' te envió una solicitud de amistad';
+                } else if (n.type === 'friend_accepted') {
+                    msg = n.fromUser + ' aceptó tu solicitud de amistad';
+                }
+                var onclickAttr = n.fromUid ? 'onclick="openUserProfile(\'' + n.fromUid + '\')"' : '';
+                return '<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;display:flex;align-items:center;gap:8px;cursor:pointer" ' + onclickAttr + ' class="user-link"'>' +
+                    (n.fromAvatar ? '<span>' + n.fromAvatar + '</span>' : '') +
+                    '<div>' + msg + ' • ' + time + '</div>' +
+                    '</div>';
             }).join('');
         }
     });
@@ -1192,8 +1576,11 @@ function openUserProfile(userId) {
         var friendBtn = document.getElementById('profileFriendBtn');
         if (currentUser && currentUser.uid !== userId) {
             friendBtn.style.display = 'inline-block';
-            var isFriend = currentUserData && currentUserData.friends && currentUserData.friends.includes(userId);
-            friendBtn.textContent = isFriend ? 'Eliminar amigo' : 'Agregar amigo';
+            // Verificar estado de amistad
+            checkFriendStatus(userId).then(function(status) {
+                viewedUserFriendStatus = status;
+                updateFriendButton();
+            });
         } else {
             friendBtn.style.display = 'none';
         }
@@ -1232,7 +1619,18 @@ function openUserProfile(userId) {
                 document.getElementById('profileViajes').textContent = viajesCount;
                 document.getElementById('profileKmTotal').textContent = kmTotal.toFixed(1) + ' km';
                 document.getElementById('profileComentarios').textContent = commentsCount;
-                document.getElementById('profileAmigos').textContent = (user.friends ? user.friends.length : 0);
+                // Contar amigos del objeto friends (nuevo formato)
+                var friendCount = user.friends ? Object.keys(user.friends).length : 0;
+                document.getElementById('profileAmigos').textContent = friendCount;
+
+                // Para perfiles de otros usuarios, mostrar badges basados en sus stats históricos
+                if (currentUser && currentUser.uid !== userId) {
+                    var userBadges = '<span class="badge purple">💎 Miembro</span>';
+                    if (viajesCount >= 5) userBadges += '<span class="badge green">🚗 Conductor activo</span>';
+                    if (viajesCount >= 20) userBadges += '<span class="badge gold">🏆 Top conductor</span>';
+                    if (kmTotal >= 100) userBadges += '<span class="badge green">📏 +100km</span>';
+                    document.getElementById('profileBadges').innerHTML = userBadges;
+                }
 
                 switchSection('perfil');
             });
@@ -1240,45 +1638,6 @@ function openUserProfile(userId) {
     });
 }
 
-function toggleFriend() {
-    if (!currentUser || !viewedUserId || currentUser.uid === viewedUserId) return;
-
-    db.ref('users/' + currentUser.uid + '/friends').transaction(function(friends) {
-        friends = friends || [];
-        if (!Array.isArray(friends)) friends = [];
-        var index = friends.indexOf(viewedUserId);
-        if (index > -1) {
-            friends.splice(index, 1);
-        } else {
-            friends.push(viewedUserId);
-        }
-        return friends;
-    }).then(function() {
-        db.ref('users/' + viewedUserId + '/friends').transaction(function(friends) {
-            friends = friends || [];
-            if (!Array.isArray(friends)) friends = [];
-            var index = friends.indexOf(currentUser.uid);
-            if (index > -1) {
-                friends.splice(index, 1);
-            } else {
-                friends.push(currentUser.uid);
-            }
-            return friends;
-        }).then(function() {
-            // Refrescar perfil actual y local
-            if (currentUserData && currentUserData.friends) {
-                var idx = currentUserData.friends.indexOf(viewedUserId);
-                if (idx > -1) {
-                    currentUserData.friends.splice(idx, 1);
-                } else {
-                    currentUserData.friends.push(viewedUserId);
-                }
-            }
-            openUserProfile(viewedUserId);
-            showToast('✅ Amistad actualizada', 'success');
-        });
-    });
-}
 
 function togglePostMenu(postId) {
     var menu = document.getElementById('menu-' + postId.replace(/[^a-zA-Z0-9]/g, '_'));
@@ -1298,6 +1657,219 @@ function deletePost(postId) {
         db.ref('posts/' + postId).remove();
         togglePostMenu(postId); // Hide menu
     }
+}
+
+// ===== SISTEMA DE SOLICITUDES DE AMISTAD =====
+var viewedUserFriendStatus = 'none'; // none, friends, pending_sent, pending_received
+
+function handleFriendAction() {
+    if (!currentUser || !viewedUserId || currentUser.uid === viewedUserId) return;
+
+    if (viewedUserFriendStatus === 'friends') {
+        // Eliminar amigo
+        removeFriend(viewedUserId);
+    } else if (viewedUserFriendStatus === 'none') {
+        // Enviar solicitud
+        sendFriendRequest(viewedUserId);
+    } else if (viewedUserFriendStatus === 'pending_sent') {
+        // Cancelar solicitud
+        cancelFriendRequest(viewedUserId);
+    } else if (viewedUserFriendStatus === 'pending_received') {
+        // Aceptar solicitud
+        acceptFriendRequest(viewedUserId);
+    }
+}
+
+function sendFriendRequest(targetUid) {
+    var requestId = currentUser.uid + '_' + targetUid;
+    var timestamp = Date.now();
+
+    // Crear solicitud
+    db.ref('friendRequests/' + requestId).set({
+        from: currentUser.uid,
+        fromName: currentUserData.name,
+        fromAvatar: currentUserData.avatar,
+        to: targetUid,
+        status: 'pending',
+        timestamp: timestamp
+    }).then(function() {
+        // Agregar notificación
+        db.ref('notifications/' + targetUid).push({
+            type: 'friend_request',
+            fromUser: currentUserData.name,
+            fromAvatar: currentUserData.avatar,
+            fromUid: currentUser.uid,
+            timestamp: timestamp
+        });
+
+        viewedUserFriendStatus = 'pending_sent';
+        updateFriendButton();
+        showToast('📨 Solicitud enviada', 'success');
+    });
+}
+
+function cancelFriendRequest(targetUid) {
+    var requestId = currentUser.uid + '_' + targetUid;
+
+    db.ref('friendRequests/' + requestId).remove().then(function() {
+        viewedUserFriendStatus = 'none';
+        updateFriendButton();
+        showToast('❌ Solicitud cancelada', 'info');
+    });
+}
+
+function acceptFriendRequest(fromUid) {
+    var requestId = fromUid + '_' + currentUser.uid;
+
+    // Actualizar solicitud a aceptada
+    db.ref('friendRequests/' + requestId).update({
+        status: 'accepted',
+        acceptedAt: Date.now()
+    }).then(function() {
+        // Agregar a amigos mutuamente
+        var updates = {};
+        updates['users/' + currentUser.uid + '/friends/' + fromUid] = true;
+        updates['users/' + fromUid + '/friends/' + currentUser.uid] = true;
+
+        db.ref().update(updates).then(function() {
+            // Actualizar listas locales
+            if (!currentUserData.friends) currentUserData.friends = {};
+            currentUserData.friends[fromUid] = true;
+            friendsList = Object.keys(currentUserData.friends);
+
+            viewedUserFriendStatus = 'friends';
+            updateFriendButton();
+            showToast('✅ ¡Ahora son amigos!', 'success');
+
+            // Notificar al otro usuario
+            db.ref('notifications/' + fromUid).push({
+                type: 'friend_accepted',
+                fromUser: currentUserData.name,
+                fromAvatar: currentUserData.avatar,
+                timestamp: Date.now()
+            });
+        });
+    });
+}
+
+function rejectFriendRequest(fromUid) {
+    var requestId = fromUid + '_' + currentUser.uid;
+
+    db.ref('friendRequests/' + requestId).remove().then(function() {
+        loadFriendRequests();
+        showToast('❌ Solicitud rechazada', 'info');
+    });
+}
+
+function removeFriend(targetUid) {
+    if (!confirm('¿Seguro que quieres eliminar a este amigo?')) return;
+
+    var updates = {};
+    updates['users/' + currentUser.uid + '/friends/' + targetUid] = null;
+    updates['users/' + targetUid + '/friends/' + currentUser.uid] = null;
+
+    db.ref().update(updates).then(function() {
+        // Actualizar local
+        if (currentUserData.friends) {
+            delete currentUserData.friends[targetUid];
+            friendsList = Object.keys(currentUserData.friends);
+        }
+
+        viewedUserFriendStatus = 'none';
+        updateFriendButton();
+        showToast('❌ Amigo eliminado', 'info');
+    });
+}
+
+function checkFriendStatus(targetUid) {
+    if (!currentUser || !targetUid) return Promise.resolve('none');
+
+    // Verificar si ya son amigos
+    if (currentUserData.friends && currentUserData.friends[targetUid]) {
+        return Promise.resolve('friends');
+    }
+
+    // Verificar si hay solicitud pendiente enviada por mí
+    var sentRequestId = currentUser.uid + '_' + targetUid;
+    var receivedRequestId = targetUid + '_' + currentUser.uid;
+
+    return db.ref('friendRequests/' + sentRequestId).once('value').then(function(snap) {
+        if (snap.exists() && snap.val().status === 'pending') {
+            return 'pending_sent';
+        }
+        return db.ref('friendRequests/' + receivedRequestId).once('value');
+    }).then(function(snap) {
+        if (snap.exists() && snap.val().status === 'pending') {
+            return 'pending_received';
+        }
+        return 'none';
+    });
+}
+
+function updateFriendButton() {
+    var btn = document.getElementById('profileFriendBtn');
+    if (!btn) return;
+
+    switch(viewedUserFriendStatus) {
+        case 'friends':
+            btn.textContent = '✓ Son amigos';
+            btn.style.background = 'var(--secondary)';
+            break;
+        case 'pending_sent':
+            btn.textContent = '⏳ Solicitud enviada (cancelar)';
+            btn.style.background = 'var(--accent)';
+            break;
+        case 'pending_received':
+            btn.textContent = '👋 Aceptar solicitud';
+            btn.style.background = 'var(--primary)';
+            break;
+        default:
+            btn.textContent = '➕ Agregar amigo';
+            btn.style.background = '';
+    }
+}
+
+function loadFriendRequests() {
+    if (!currentUser) return;
+
+    db.ref('friendRequests').orderByChild('to').equalTo(currentUser.uid).on('value', function(snap) {
+        var requests = [];
+        snap.forEach(function(child) {
+            var req = child.val();
+            if (req.status === 'pending') {
+                req.id = child.key;
+                requests.push(req);
+            }
+        });
+
+        // Actualizar contador
+        var countEl = document.getElementById('requestCount');
+        var section = document.getElementById('friendRequestsSection');
+        var list = document.getElementById('friendRequestsList');
+
+        if (countEl) countEl.textContent = requests.length;
+
+        if (requests.length === 0) {
+            if (section) section.style.display = 'none';
+        } else {
+            if (section) section.style.display = 'block';
+            if (list) {
+                list.innerHTML = requests.map(function(req) {
+                    return '<div class="friend-request-item">' +
+                        '<div class="friend-request-avatar">' + (req.fromAvatar || '😎') + '</div>' +
+                        '<div class="friend-request-info">' +
+                        '<div class="friend-request-name">' + req.fromName + '</div>' +
+                        '<div class="friend-request-meta">Quiere ser tu amigo</div>' +
+                        '</div>' +
+                        '<div class="friend-request-actions">' +
+                        '<button class="btn-accept" onclick="acceptFriendRequest(\'' + req.from + '\')">Aceptar</button>' +
+                        '<button class="btn-reject" onclick="rejectFriendRequest(\'' + req.from + '\')">Rechazar</button>' +
+                        '</div>' +
+                        '</div>';
+                }).join('');
+            }
+        }
+    });
 }
 
 function addComment(postId) {
@@ -1367,6 +1939,16 @@ function enterApp() {
     var onRef = db.ref('online/' + currentUser.uid);
     onRef.set({ name: currentUserData.name, avatar: currentUserData.avatar, comuna: currentUserData.comuna, time: Date.now() });
     onRef.onDisconnect().remove();
+
+    // Cargar lista de amigos para filtros del mapa (nuevo formato objeto)
+    if (currentUserData.friends) {
+        friendsList = Object.keys(currentUserData.friends);
+    } else {
+        friendsList = [];
+    }
+
+    // Cargar solicitudes de amistad pendientes
+    loadFriendRequests();
 
     listenOnline();
     listenPosts();
@@ -1446,12 +2028,419 @@ function shareApp() {
     }
 }
 
+// ===== MAP & LOCATION FUNCTIONS =====
+let map = null;
+let markers = {};
+let myMarker = null;
+let locationWatcher = null;
+let locationSharing = false;
+let mapFilter = 'all';
+let friendsList = [];
+
+function initMap() {
+    if (map) return;
+
+    // Intentar obtener ubicación actual antes de cargar el mapa
+    if (navigator.geolocation && !myPosition) {
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                myPosition = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+                createMap(myPosition.lat, myPosition.lng, 14);
+            },
+            function() {
+                // Si falla, usar Santiago como fallback
+                createMap(-33.4489, -70.6693, 12);
+            },
+            { timeout: 5000 }
+        );
+    } else if (myPosition) {
+        // Ya tenemos ubicación
+        createMap(myPosition.lat, myPosition.lng, 14);
+    } else {
+        // Fallback a Santiago
+        createMap(-33.4489, -70.6693, 12);
+    }
+}
+
+function createMap(lat, lng, zoom) {
+    map = L.map('map').setView([lat, lng], zoom);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19
+    }).addTo(map);
+
+    document.getElementById('mapLoading').style.display = 'none';
+
+    // Si es mi ubicación, agregar marcador
+    if (myPosition && lat === myPosition.lat && lng === myPosition.lng) {
+        updateMyMarker();
+    }
+}
+
+let myPosition = null;
+let driversData = {};
+
+function toggleLocationSharing() {
+    if (locationSharing) {
+        stopLocationSharing();
+    } else {
+        startLocationSharing();
+    }
+}
+
+function startLocationSharing() {
+    if (!navigator.geolocation) {
+        showToast('❌ Tu navegador no soporta geolocalización', 'danger');
+        return;
+    }
+
+    document.getElementById('locationToggle').textContent = 'Activando...';
+    document.getElementById('locationToggle').disabled = true;
+
+    locationWatcher = navigator.geolocation.watchPosition(
+        function(position) {
+            myPosition = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude,
+                accuracy: position.coords.accuracy,
+                timestamp: Date.now()
+            };
+
+            // Guardar en Firebase
+            if (currentUser) {
+                db.ref('locations/' + currentUser.uid).set({
+                    lat: myPosition.lat,
+                    lng: myPosition.lng,
+                    accuracy: myPosition.accuracy,
+                    name: currentUserData.name,
+                    avatar: currentUserData.avatar,
+                    city: currentUserData.city,
+                    comuna: currentUserData.comuna,
+                    vehicle: currentUserData.vehicle,
+                    timestamp: Date.now()
+                });
+            }
+
+            locationSharing = true;
+            updateLocationUI(true);
+
+            // Inicializar mapa si no está listo
+            if (!map) {
+                initMap();
+            }
+
+            // Actualizar mi marcador
+            updateMyMarker();
+
+            // Escuchar otros conductores
+            listenDriversLocations();
+        },
+        function(error) {
+            let msg = 'Error al obtener ubicación';
+            if (error.code === 1) msg = 'Permiso de ubicación denegado';
+            if (error.code === 2) msg = 'Ubicación no disponible';
+            showToast('❌ ' + msg, 'danger');
+            document.getElementById('locationToggle').disabled = false;
+            document.getElementById('locationToggle').textContent = 'Activar';
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    );
+}
+
+function stopLocationSharing() {
+    if (locationWatcher) {
+        navigator.geolocation.clearWatch(locationWatcher);
+        locationWatcher = null;
+    }
+
+    locationSharing = false;
+
+    // Remover de Firebase
+    if (currentUser) {
+        db.ref('locations/' + currentUser.uid).remove();
+    }
+
+    // Remover mi marcador
+    if (myMarker) {
+        map.removeLayer(myMarker);
+        myMarker = null;
+    }
+
+    updateLocationUI(false);
+    showToast('📍 Ubicación desactivada', 'info');
+}
+
+function updateLocationUI(active) {
+    const dot = document.getElementById('locationDot');
+    const text = document.getElementById('locationText');
+    const btn = document.getElementById('locationToggle');
+
+    if (active) {
+        dot.style.background = 'var(--secondary)';
+        dot.style.animation = 'pulse 2s infinite';
+        text.textContent = 'Compartiendo ubicación en tiempo real';
+        btn.textContent = 'Desactivar';
+        btn.style.background = 'var(--danger)';
+        btn.disabled = false;
+    } else {
+        dot.style.background = 'var(--text-muted)';
+        dot.style.animation = 'none';
+        text.textContent = 'Ubicación desactivada';
+        btn.textContent = 'Activar';
+        btn.style.background = '';
+        btn.disabled = false;
+    }
+}
+
+function updateMyMarker() {
+    if (!map || !myPosition) return;
+
+    if (myMarker) {
+        myMarker.setLatLng([myPosition.lat, myPosition.lng]);
+    } else {
+        const customIcon = L.divIcon({
+            className: 'custom-marker',
+            html: '<div class="driver-marker me" title="Tú">' + (currentUserData.avatar || '😎') + '</div>',
+            iconSize: [40, 40],
+            iconAnchor: [20, 20]
+        });
+
+        myMarker = L.marker([myPosition.lat, myPosition.lng], { icon: customIcon })
+            .addTo(map)
+            .bindPopup('<div class="driver-popup"><div class="popup-name">Tú</div><div class="popup-info">' + currentUserData.comuna + '</div></div>');
+    }
+}
+
+function listenDriversLocations() {
+    // Escuchar cambios en ubicaciones
+    db.ref('locations').on('value', function(snap) {
+        driversData = snap.val() || {};
+        updateMapMarkers();
+        updateNearbyList();
+        updateHotZones();
+    });
+}
+
+function setMapFilter(filter) {
+    mapFilter = filter;
+
+    // Actualizar botones
+    ['all', 'comuna', 'city', 'friends'].forEach(f => {
+        const btn = document.getElementById('filter' + f.charAt(0).toUpperCase() + f.slice(1));
+        if (btn) {
+            btn.style.background = (f === filter) ? 'var(--gradient-1)' : '';
+        }
+    });
+
+    updateMapMarkers();
+    updateNearbyList();
+}
+
+function updateMapMarkers() {
+    if (!map) return;
+
+    // Actualizar marcadores existentes y crear nuevos
+    Object.keys(driversData).forEach(function(uid) {
+        if (uid === currentUser.uid) return; // Skip self
+
+        var driver = driversData[uid];
+
+        // Aplicar filtros
+        if (!shouldShowDriver(driver)) {
+            if (markers[uid]) {
+                map.removeLayer(markers[uid]);
+                delete markers[uid];
+            }
+            return;
+        }
+
+        // Verificar si el dato es reciente (menos de 10 minutos)
+        var isRecent = (Date.now() - driver.timestamp) < 600000;
+        if (!isRecent) return; // No mostrar conductores inactivos
+
+        var isFriend = friendsList.indexOf(uid) > -1;
+
+        if (markers[uid]) {
+            markers[uid].setLatLng([driver.lat, driver.lng]);
+        } else {
+            var customIcon = L.divIcon({
+                className: 'custom-marker',
+                html: '<div class="driver-marker ' + (isFriend ? 'friend' : '') + '">' + (driver.avatar || '🚗') + '</div>',
+                iconSize: [40, 40],
+                iconAnchor: [20, 20]
+            });
+
+            markers[uid] = L.marker([driver.lat, driver.lng], { icon: customIcon })
+                .addTo(map)
+                .bindPopup(createDriverPopup(driver, uid));
+        }
+    });
+
+    // Remover marcadores de conductores que ya no están
+    Object.keys(markers).forEach(function(uid) {
+        if (!driversData[uid] || uid === currentUser.uid) {
+            map.removeLayer(markers[uid]);
+            delete markers[uid];
+        }
+    });
+}
+
+function shouldShowDriver(driver) {
+    if (mapFilter === 'all') return true;
+    if (mapFilter === 'comuna') return driver.comuna === currentUserData.comuna;
+    if (mapFilter === 'city') return driver.city === currentUserData.city;
+    if (mapFilter === 'friends') {
+        // Buscar el UID del driver en los datos
+        var uid = Object.keys(driversData).find(function(key) {
+            return driversData[key] === driver;
+        });
+        return uid && friendsList.indexOf(uid) > -1;
+    }
+    return true;
+}
+
+function createDriverPopup(driver, uid) {
+    return '<div class="driver-popup">' +
+        '<div class="popup-name">' + driver.name + '</div>' +
+        '<div class="popup-info">' + driver.vehicle + ' • ' + driver.comuna + '</div>' +
+        '<div class="popup-actions">' +
+        '<button class="btn-profile" onclick="openUserProfile(\'' + uid + '\'); closeAllPopups();">Ver perfil</button>' +
+        '</div></div>';
+}
+
+function closeAllPopups() {
+    if (map) {
+        map.closePopup();
+    }
+}
+
+function updateNearbyList() {
+    if (!myPosition) {
+        document.getElementById('nearbyDrivers').innerHTML = '<div class="loading">Activa tu ubicación para ver conductores</div>';
+        document.getElementById('nearbyCount').textContent = '0 encontrados';
+        return;
+    }
+
+    var nearby = [];
+    Object.keys(driversData).forEach(function(uid) {
+        if (uid === currentUser.uid) return;
+
+        var driver = driversData[uid];
+        if (!shouldShowDriver(driver)) return;
+
+        var distance = calculateDistance(myPosition.lat, myPosition.lng, driver.lat, driver.lng);
+        if (distance <= 10) { // Solo conductores a menos de 10km
+            nearby.push({ uid: uid, driver: driver, distance: distance });
+        }
+    });
+
+    nearby.sort(function(a, b) { return a.distance - b.distance; });
+
+    document.getElementById('nearbyCount').textContent = nearby.length + ' encontrados';
+
+    if (nearby.length === 0) {
+        document.getElementById('nearbyDrivers').innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">No hay conductores cercanos con el filtro actual</div>';
+        return;
+    }
+
+    document.getElementById('nearbyDrivers').innerHTML = nearby.map(function(item) {
+        var dist = item.distance < 1 ? Math.round(item.distance * 1000) + ' m' : item.distance.toFixed(1) + ' km';
+        var isFriend = friendsList.indexOf(item.uid) > -1;
+        return '<div class="nearby-driver-item" onclick="focusOnDriver(\'' + item.uid + '\')" style="cursor:pointer">' +
+            '<div class="nearby-driver-avatar" style="background:' + (isFriend ? 'var(--secondary)' : 'var(--gradient-1)') + '">' + (item.driver.avatar || '🚗') + '</div>' +
+            '<div class="nearby-driver-info">' +
+            '<div class="nearby-driver-name">' + item.driver.name + (isFriend ? ' ⭐' : '') + '</div>' +
+            '<div class="nearby-driver-meta">' + item.driver.vehicle + ' • ' + item.driver.comuna + '</div>' +
+            '</div>' +
+            '<div class="nearby-driver-distance">' + dist + '</div>' +
+            '</div>';
+    }).join('');
+}
+
+function focusOnDriver(uid) {
+    if (!map || !driversData[uid]) return;
+    const driver = driversData[uid];
+    map.setView([driver.lat, driver.lng], 16);
+    if (markers[uid]) {
+        markers[uid].openPopup();
+    }
+}
+
+function calculateDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371; // Radio de la Tierra en km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+}
+
+function updateHotZones() {
+    // Agrupar conductores por comuna
+    var zones = {};
+    Object.keys(driversData).forEach(function(uid) {
+        var comuna = driversData[uid].comuna;
+        if (!comuna) return;
+        if (!zones[comuna]) zones[comuna] = 0;
+        zones[comuna]++;
+    });
+
+    // Convertir a array y ordenar
+    var zoneArray = Object.keys(zones).map(function(comuna) {
+        return { comuna: comuna, count: zones[comuna] };
+    }).sort(function(a, b) { return b.count - a.count; });
+
+    if (zoneArray.length === 0) {
+        document.getElementById('hotZones').innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">📊 Datos insuficientes para mostrar zonas calientes</div>';
+        return;
+    }
+
+    var maxCount = zoneArray[0].count;
+
+    document.getElementById('hotZones').innerHTML = zoneArray.slice(0, 5).map(function(z, i) {
+        var intensity = z.count >= maxCount * 0.7 ? 'high' : (z.count >= maxCount * 0.4 ? 'medium' : 'low');
+        var icon = intensity === 'high' ? '🔥' : (intensity === 'medium' ? '🔸' : '🔹');
+        var trend = i < 3 ? '↑ Subiendo' : '→ Estable';
+        var color = intensity === 'high' ? 'var(--danger)' : (intensity === 'medium' ? 'var(--accent)' : 'var(--secondary)');
+        return '<div class="zone-item">' +
+            '<div class="zone-heatmap ' + intensity + '">' + icon + '</div>' +
+            '<div class="zone-info">' +
+            '<div class="zone-name">' + z.comuna + '</div>' +
+            '<div class="zone-count">' + z.count + ' conductores activos</div>' +
+            '</div>' +
+            '<div class="zone-trend" style="color:' + color + '">' + trend + '</div>' +
+            '</div>';
+    }).join('');
+}
+
+// Inicializar mapa cuando se muestra la sección
+const originalSwitchSection = switchSection;
+switchSection = function(section) {
+    originalSwitchSection(section);
+    if (section === 'mapa' && !map) {
+        setTimeout(initMap, 100);
+    }
+};
+
 // ===== KEEP SESSION ALIVE =====
 setInterval(function() {
     if (currentUser) {
         db.ref('online/' + currentUser.uid).update({
             time: Date.now()
         });
+
+        // También actualizar ubicación si está activa
+        if (locationSharing && myPosition) {
+            db.ref('locations/' + currentUser.uid).update({
+                timestamp: Date.now()
+            });
+        }
     }
 }, 60000);
 </script>
