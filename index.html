@@ -2476,35 +2476,20 @@ function initFotoViaje() {
 
 async function leerFotoConIA(dataUrl) {
     try {
-        // Separar base64
         var parts = dataUrl.split(',');
         var mediaType = parts[0].match(/:(.*?);/)[1];
         var base64Data = parts[1];
 
-        var response = await fetch('https://api.anthropic.com/v1/messages', {
+        var response = await fetch('https://riders-proxy.emilygabrielaacevedorosales.workers.dev/', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                model: 'claude-sonnet-4-20250514',
-                max_tokens: 300,
-                messages: [{
-                    role: 'user',
-                    content: [
-                        {
-                            type: 'image',
-                            source: { type: 'base64', media_type: mediaType, data: base64Data }
-                        },
-                        {
-                            type: 'text',
-                            text: 'Esta es una captura de pantalla de un resumen de viaje de Uber u otra app de transporte. Extrae los datos y responde SOLO con JSON válido, sin texto adicional, con este formato exacto: {"km": 12.5, "ganancia": 5500, "origen": "Viña del Mar", "destino": "Valparaíso"}. Si no encuentras algún dato ponlo como null. El valor de ganancia debe ser en pesos chilenos CLP (número entero). El km debe ser número decimal. origen y destino son los nombres de la ciudad o comuna.'
-                        }
-                    ]
-                }]
-            })
+            body: JSON.stringify({ image: base64Data, mimeType: mediaType })
         });
 
         var data = await response.json();
-        var text = data.content && data.content[0] && data.content[0].text;
+        // Gemini response format
+        var text = data.candidates && data.candidates[0] && data.candidates[0].content &&
+                   data.candidates[0].content.parts && data.candidates[0].content.parts[0].text;
         if (!text) throw new Error('Sin respuesta de IA');
 
         // Limpiar y parsear JSON
