@@ -2605,7 +2605,9 @@ setInterval(function() {
 </script>
  <script>
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').catch(function(){});
+    navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for (var r of registrations) { r.unregister(); }
+    });
 }
 </script>
 </body>
